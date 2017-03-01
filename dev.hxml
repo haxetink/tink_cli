@@ -1,0 +1,9 @@
+tests.hxml
+
+-js bin/node/index.js
+
+-lib hxnodejs
+-lib tink_cli
+-lib travix
+
+-dce full

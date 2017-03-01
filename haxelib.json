@@ -1,0 +1,19 @@
+{
+  "name": "tink_cli",
+  "license": "MIT",
+  "tags": [
+    "cross",
+    "cli"
+  ],
+  "classPath": "src",
+  "contributors": [
+    "kevinresol"
+  ],
+  "releasenote": "initial release",
+  "version": "0.0.0",
+  "url": "https://github.com/kevinresol/tink_cli/",
+  "dependencies": {
+    "tink_macro": "",
+    "tink_stringly": ""
+  }
+}
