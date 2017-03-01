@@ -155,17 +155,23 @@ class Macro {
 				function process(type:Type) {
 					return switch type {
 						case TLazy(f): process(f());
-						case TFun(args, _):
-							switch args {
+						case TFun(args, ret):
+							var expr = switch args {
 								case []:
-									macro return command.$name();
+									macro command.$name();
 								case [{t: t}] if(Context.unify(t, (macro:Array<String>).toType().sure())):
 									// TODO: allow putting at most one Array<String>/Rest<T> anywhere in the argument list
-									macro return command.$name(args);
+									macro command.$name(args);
 								default:
 									var cargs = [for(i in 0...args.length) macro args[$v{i}]];
-									macro return command.$name($a{cargs});
+									macro command.$name($a{cargs});
 							}
+							
+							// default exit code for a function that returns void
+							if(ret.getID() == 'Void') expr = expr.concat(macro 0);
+							
+							macro return $expr;
+							
 						default: throw 'assert';
 					}
 				}

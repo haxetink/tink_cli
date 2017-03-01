@@ -41,7 +41,6 @@ class TestCommand {
 	@:defaultCommand
 	public function defaultAction(args:Array<String>) {
 		trace('defaultAction $args');
-		return 9;
 	}
 }
 
