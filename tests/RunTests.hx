@@ -1,5 +1,7 @@
 package ;
 
+using tink.CoreApi;
+
 class RunTests {
 
 	static function main() {
@@ -35,7 +37,7 @@ class TestCommand {
 	@:command('uni')
 	public function uninstall(path:String, retries:Int) {
 		trace('uninstall $path $retries');
-		return 0;
+		return Failure('123');
 	}
 	
 	@:defaultCommand
