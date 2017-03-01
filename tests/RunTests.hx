@@ -6,7 +6,7 @@ class RunTests {
 		var args = Sys.args();
 		#if interp Sys.setCwd(args.pop()) #end
 		
-		args = ['uninstall', 'b', '2'];
+		args = ['uni', 'b', '2'];
 		tink.Cli.process(args, new TestCommand()).handle(travix.Logger.exit);
 	}
 
@@ -21,7 +21,7 @@ class TestCommand {
 	@:alias('b')
 	public var force:String;
 	
-	@:command('init')
+	@:command('init2')
 	public var init = new InitCommand();
 	
 	public function new() {}
@@ -32,7 +32,7 @@ class TestCommand {
 		return 0;
 	}
 	
-	@:command
+	@:command('uni')
 	public function uninstall(path:String, retries:Int) {
 		trace('uninstall $path $retries');
 		return 0;
@@ -47,4 +47,10 @@ class TestCommand {
 
 class InitCommand {
 	public function new() {}
+	
+	@:defaultCommand
+	public function defaultInit(args:Array<String>) {
+		trace('defaultInit $args');
+		return 9;
+	}
 }

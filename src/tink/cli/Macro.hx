@@ -110,7 +110,6 @@ class Macro {
 					}
 					
 					var alias = flag.charCodeAt(0);
-					
 					switch field.meta.extract(':alias') {
 						case []: // do nothing
 						case [{params: [{expr: EConst(CString(v))}]}] if(v.length == 1): alias = v.charCodeAt(0);
@@ -120,22 +119,6 @@ class Macro {
 					addFlag(flag, alias);
 				
 				case FMethod(_):
-					var command = null;
-					var isDefault = false;
-					
-					switch field.meta.extract(':defaultCommand') {
-						case [v]: command = field.name; isDefault = true;
-						default:
-					}
-					
-					switch field.meta.extract(':command') {
-						case []: // not command
-						case [{params: []}]: command = field.name;
-						case [{params: [{expr: EConst(CString(v))}]}]: command = v;
-						default: Context.error('Invalid @:command meta', field.pos);
-					}
-					
-					if(command != null) addCommand(command, isDefault);
 			}
 		}
 		
@@ -164,10 +147,10 @@ class Macro {
 	}
 	
 	static function buildCommandForwardCall(command:Command) {
-		var name = command.name;
+		var name = command.field.name;
 		return switch command.field.kind {
 			case FVar(_):
-				macro return 0;
+				macro return tink.Cli.process(args, command.$name);
 			case FMethod(_):
 				function process(type:Type) {
 					return switch type {
@@ -177,6 +160,7 @@ class Macro {
 								case []:
 									macro return command.$name();
 								case [{t: t}] if(Context.unify(t, (macro:Array<String>).toType().sure())):
+									// TODO: allow putting at most one Array<String>/Rest<T> anywhere in the argument list
 									macro return command.$name(args);
 								default:
 									var cargs = [for(i in 0...args.length) macro args[$v{i}]];
