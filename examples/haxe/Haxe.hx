@@ -1,5 +1,6 @@
 package;
 
+import tink.cli.*;
 import tink.Cli;
 
 class Haxe {
@@ -21,7 +22,7 @@ class Command {
 	public function new() {}
 	
 	@:defaultCommand
-	public function run(rest:Array<String>) {
+	public function run(rest:Rest<String>) {
 		Sys.println('js: $js');
 		Sys.println('lib: $lib');
 		Sys.println('main: $main');
