@@ -57,13 +57,15 @@ class TestCommand {
 		}
 		
 		return Future.ofMany([
+			run(['rest', 'a', 'b']),
 			run(['rest', 'a', 'b', 'c']),
 			run(['rest', 'a', 'b', 'c', 'd']),
 			run(['rest', 'a', 'b', 'c', 'd', 'e']),
 		]).map(function(o) return 
-			equals('rest a b  c', o[0]) &&
-			equals('rest a b c d', o[1]) &&
-			equals('rest a b c,d e', o[2])
+			equals(null, o[0]) && // failed, not enough args
+			equals('rest a b  c', o[1]) &&
+			equals('rest a b c d', o[2]) &&
+			equals('rest a b c,d e', o[3])
 		);
 	}
 	
