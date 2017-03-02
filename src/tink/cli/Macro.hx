@@ -137,14 +137,14 @@ class Macro {
 						break;
 					}
 					for(a in aliases) if(flag.aliases.indexOf(a) != -1) {
-						usedAlias = null;
+						usedAlias = a;
 						break;
 					}
 				}
 				switch [usedName, usedAlias]  {
 					case [null, null]: info.flags.push({names: names, aliases: aliases, field: field});
-					case [null, v]: Context.error('Duplicate flag alias: ' + String.fromCharCode(v), field.pos);
-					case [v, _]: Context.error('Duplicate flag name: $v', field.pos);
+					case [null, v]: field.pos.makeFailure('Duplicate flag alias: "-' + String.fromCharCode(v) + '"').sure();
+					case [v, _]: field.pos.makeFailure('Duplicate flag name: $v').sure();
 				}
 			}
 			

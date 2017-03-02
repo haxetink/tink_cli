@@ -190,10 +190,13 @@ class FlagCommand extends DebugCommand {
 	public var int:Int;
 	public var float:Float;
 	
+	@:alias('j')
 	public var ints:Array<Int>;
+	@:alias('k')
 	public var floats:Array<Float>;
 	public var strings:Array<String>;
 	
+	@:alias('o')
 	public var map:CustomMap;
 	
 	@:defaultCommand
