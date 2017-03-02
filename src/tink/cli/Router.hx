@@ -12,28 +12,37 @@ class Router<T> {
 		return Noise;
 	}
 	
-	function processArgs(args:Array<String>):Array<String> {
-		var rest = [];
-		var i = 0;
-		while(i < args.length) {
-			var arg = args[i];
-			if(arg.charCodeAt(0) == '-'.code)
-				if(arg.charCodeAt(1) == '-'.code)
-					i += processFlag(args, i);
-				else
-					i += processAlias(args, i);
-			else
-				rest.push(arg);
-			i++;
-		}
-		return rest;
+	function processArgs(args:Array<String>):Outcome<Array<String>, Error> {
+		return Error.catchExceptions(function() {
+			var rest = [];
+			var i = 0;
+			while(i < args.length) {
+				var arg = args[i];
+				
+				switch processFlag(args, i) {
+					case -1: // unrecognized flag
+						if(arg.charCodeAt(0) == '-'.code)
+							switch processAlias(args, i) {
+								case -1: throw 'Unrecognized flag "$arg"';
+								case v: i += v + 1;
+							}
+						else {
+							rest.push(arg);
+							i++;
+						}
+					case v:
+						i += v + 1;
+				}
+			}
+			return rest;
+		});
 	}
 	
 	function processFlag(args:Array<String>, index:Int) {
-		return 0;
+		return -1;
 	}
 	
 	function processAlias(args:Array<String>, index:Int) {
-		return 0;
+		return -1;
 	}
 }

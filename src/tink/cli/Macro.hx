@@ -65,7 +65,7 @@ class Macro {
 			}
 			
 			flagCases.push({
-				values: [for(name in flag.names) macro $v{'--$name'}],
+				values: [for(name in flag.names) macro $v{name}],
 				guard: null,
 				expr: assignment,
 			});
@@ -84,13 +84,13 @@ class Macro {
 		var clsname = 'Router' + counter++;
 		var def = macro class $clsname extends tink.cli.Router<$ct> {
 			
-			override function process(args:Array<String>) return {
+			override function process(args:Array<String>):tink.cli.ExitCode return {
 				${ESwitch(macro args[0], cmdCases, buildCommandCall(defCommand)).at()}
 			}
 			
 			override function processFlag(args:Array<String>, index:Int) {
 				var current = index;
-				${ESwitch(macro args[index], flagCases, macro throw "Invalid flag '" + args[index] + "'").at()}
+				${ESwitch(macro args[index], flagCases, macro return -1).at()}
 				return current - index;
 			}
 			
@@ -107,6 +107,9 @@ class Macro {
 		
 		def.fields = def.fields.concat(fields);
 		def.pack = ['tink', 'cli'];
+		
+		if(info.aliasDisabled) def.fields.remove(def.fields.find(function(f) return f.name == 'processAlias'));
+		
 		Context.defineType(def);
 		
 		return Context.getType('tink.cli.$clsname');
@@ -173,9 +176,16 @@ class Macro {
 					var flags = [];
 					switch field.meta.extract(':flag') {
 						case []:
-							flags.push(field.name);
+							flags.push('--' + field.name);
 						case [{params: params}]:
-							for(p in params) flags.push(p.getString().sure());
+							for(p in params) {
+								var flag = p.getString().sure();
+								switch [flag.charCodeAt(0), flag.charCodeAt(1)] {
+									case ['-'.code, '-'.code]: flags.push(flag);
+									case ['-'.code, _]: flags.push(flag); info.aliasDisabled = true;
+									default: flags.push('--$flag');
+								}
+							}
 						case v:
 							v[1].pos.makeFailure('Only a single @:flag meta is allowed').sure();
 					}
@@ -183,10 +193,14 @@ class Macro {
 					var aliases = [];
 					switch field.meta.extract(':alias') {
 						case []:
-							for(flag in flags) {
-								var code = flag.charCodeAt(0);
-								if(aliases.indexOf(code) == -1) aliases.push(code);
-							}
+							for(flag in flags)
+								for(i in 0...flag.length)
+									switch flag.charCodeAt(i) {
+										case '-'.code: // continue
+										case v:
+											if(aliases.indexOf(v) == -1) aliases.push(v);
+											break;
+									}
 						case [{params: params}]:
 							for(p in params) {
 								var v = p.getString().sure();
@@ -208,7 +222,12 @@ class Macro {
 	
 	static function buildCommandCall(command:Command) {
 		var args = command.isDefault ? macro args : macro args.slice(1);
-		return macro $i{'run_' + command.name}(processArgs($args));
+		return macro $i{'run_' + command.name}(
+			switch processArgs($args) {
+				case Success(args): args;
+				case Failure(f): return tink.core.Outcome.Failure(f);
+			}
+		);
 	}
 	
 	static function buildCommandField(command:Command):Field {
