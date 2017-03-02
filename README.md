@@ -17,6 +17,9 @@ Also, the framework will also recognize the first letter of the flag name as ali
 You can use metadata data to govern the flag name (`@:flag('my-custom-flag-name')`) and alias (`@:alias('a')`).
 Note that you can only use a single charater for alias.
 
+The reason for a single-char restriction for alias is that you can use a condensed alias format, for example:
+
+`-abcdefg` is actually equivalent to `-a -b -c -d -e -f -g`.
 
 ### Commands
 Public methods tagged with `@:command` will be treated as a runnable command.
@@ -34,7 +37,7 @@ TODO...
 
 ### Data Types
 
-By default, Int, Float and String are supported. Furthermore, you can use any abstract that is castable from String
+By default, Bool, Int, Float and String are supported. Furthermore, you can use any abstract that is castable from String
 (i.e. `from String` or `@:from public static function ofString(v:String)`) as the data type.
 
 For example, to use a Map:
@@ -53,6 +56,18 @@ abstract CustomMap(StringMap<Int>) from StringMap<Int> to StringMap<Int> {
 		return map;
 	}
 } 
+```
+
+Also, note that if a flag is of type Bool, the flag will be set to true without considering the "switch argument",
+For example, `--force` is used instead of `--force true` to set `force = true`. In fact in the latter case, the `true`
+string is considered as a Rest argument.
+
+Rest argument is a list of strings which are not consumed by the flag parser. You can capture it in a command with
+an `Array<String>`. For example:
+
+```haxe
+@:defaultCommand
+public function run(rest:Array<String>) {}
 ```
 
 ### Examples
