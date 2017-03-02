@@ -70,6 +70,30 @@ an `Array<String>`. For example:
 public function run(rest:Array<String>) {}
 ```
 
+### User Input
+
+Besides a non-interaction tool as described above. One can also build an interactive tool, by utilizing the `Prompt` interface.
+
+It is bascally:
+
+```haxe
+interface Prompt {
+	function prompt(type:PromptType):Promise<String>;
+}
+
+enum PromptType {
+	Simple(prompt:String);
+	MultipleChoices(prompt:String, choices:Array<String>);
+}
+```
+
+Basically you ask for an input from the user, and then you will get a promised result. It is just an interface
+so you can basically implement any mechanism of input, from simple text input to "GUI" input with arrow movements, etc.
+
+For now there is a `SimplePrompt` which basically read from the stdin and take in anything the user gives.
+And in case of multiple choice prompt, `RetryPrompt` will make sure the user are choosing from the provided list of choices,
+and fail after certain number of retries.
+
 ### Examples
 
 Check out the examples folder.
