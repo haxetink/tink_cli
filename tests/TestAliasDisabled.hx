@@ -1,5 +1,6 @@
 package;
 
+import tink.cli.*;
 import tink.Cli;
 import tink.unit.Assert.*;
 import haxe.ds.StringMap;
@@ -33,7 +34,7 @@ class AliasCommand extends DebugCommand {
 	public var path:String;
 	
 	@:defaultCommand
-	public function run(args:Array<String>) {
+	public function run(args:Rest<String>) {
 		debug = 'run ' + args.join(',');
 	}
 }

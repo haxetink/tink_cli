@@ -252,6 +252,7 @@ class Macro {
 	
 	static function buildCommandForwardCall(command:Command) {
 		var name = command.field.name;
+		var pos = command.field.pos;
 		return switch command.field.kind {
 			case FVar(_):
 				macro return tink.Cli.process(args, command.$name);
@@ -263,12 +264,39 @@ class Macro {
 							var expr = switch args {
 								case []:
 									macro command.$name();
-								case [{t: t}] if(Context.unify(t, (macro:Array<String>).toType().sure())):
-									// TODO: allow putting at most one Array<String>/Rest<T> anywhere in the argument list
-									macro command.$name(args);
 								default:
-									var cargs = [for(i in 0...args.length) macro args[$v{i}]];
-									macro command.$name($a{cargs});
+									var requiredParams = args.length;
+									var restLocation = -1;
+									for(i in 0...args.length) {
+										var arg = args[i];
+										switch arg.t.reduce() {
+											case TAbstract(_.get() => {pack: ['tink', 'cli'], name: 'Rest'}, _):
+												if(restLocation != -1) command.field.pos.makeFailure('A command can only accept at most one Rest<T> argument').sure();
+												requiredParams--;
+												restLocation = i;
+											default:
+										}
+									}
+									
+									var expr = macro @:pos(pos) if(args.length < $v{requiredParams}) return tink.core.Outcome.Failure(new tink.core.Error('Insufficient arguments. Expected: ' + $v{requiredParams} + ', Got: ' + args.length));
+									
+									var cargs = [];
+									if(restLocation == -1) {
+										
+										for(i in 0...args.length) cargs.push(macro @:pos(pos) args[$v{i}]);
+										
+									} else {
+										
+										for(i in 0...restLocation) cargs.push(macro @:pos(pos) args[$v{i}]);
+										
+										var remaining = args.length - restLocation - 1;
+										cargs.push(macro @:pos(pos) args.slice($v{restLocation}, args.length - $v{remaining}));
+										
+										for(i in 0...remaining) cargs.push(macro @:pos(pos) args[args.length - $v{remaining - i}]);
+										
+									}
+										
+									expr = expr.concat(macro command.$name($a{cargs}));
 							}
 							
 							var ret = switch ret.reduce() {

@@ -1,5 +1,6 @@
 package;
 
+import tink.cli.*;
 import tink.Cli;
 import tink.unit.Assert.*;
 import haxe.ds.StringMap;
@@ -200,7 +201,7 @@ class FlagCommand extends DebugCommand {
 	public var map:CustomMap;
 	
 	@:defaultCommand
-	public function run(args:Array<String>) {
+	public function run(args:Rest<String>) {
 		debug = 'run ' + args.join(',');
 	}
 }

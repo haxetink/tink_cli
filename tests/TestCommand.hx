@@ -1,5 +1,6 @@
 package;
 
+import tink.cli.*;
 import tink.Cli;
 import tink.unit.Assert.*;
 
@@ -46,6 +47,24 @@ class TestCommand {
 		}
 		return run('multi1').and(run('multi2'))
 			.map(function(o) return equals('multi', o.a.result()) && equals('multi', o.b.result()));
+	}
+	
+	@:describe('Rest Arguments')
+	public function testRest() {
+		function run(cmd:Array<String>) {
+			var command = new EntryCommand();
+			return Cli.process(cmd, command).map(function(_) return command.result());
+		}
+		
+		return Future.ofMany([
+			run(['rest', 'a', 'b', 'c']),
+			run(['rest', 'a', 'b', 'c', 'd']),
+			run(['rest', 'a', 'b', 'c', 'd', 'e']),
+		]).map(function(o) return 
+			equals('rest a b  c', o[0]) &&
+			equals('rest a b c d', o[1]) &&
+			equals('rest a b c,d e', o[2])
+		);
 	}
 	
 	@:describe('Const Result')
@@ -108,8 +127,13 @@ class EntryCommand extends DebugCommand {
 		debug = 'multi';
 	}
 	
+	@:command
+	public function rest(a:String, b:String, c:Rest<String>, d:String) {
+		debug = 'rest $a $b ${c.join(',')} $d';
+	}
+	
 	@:defaultCommand
-	public function defaultAction(args:Array<String>) {
+	public function defaultAction(args:Rest<String>) {
 		debug = 'defaultAction ' + args.join(',');
 	}
 	
@@ -124,7 +148,7 @@ class EntryCommand extends DebugCommand {
 
 class InitCommand extends DebugCommand{
 	@:defaultCommand
-	public function defaultInit(args:Array<String>) {
+	public function defaultInit(args:Rest<String>) {
 		debug = 'defaultInit ' + args.join(',');
 	}
 }
