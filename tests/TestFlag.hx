@@ -2,6 +2,7 @@ package;
 
 import tink.Cli;
 import tink.unit.Assert.*;
+import haxe.ds.StringMap;
 
 using tink.CoreApi;
 
@@ -78,23 +79,51 @@ class TestFlag {
 	
 	@:describe('Bool Flag')
 	public function testBool() {
-		
-		var result = isTrue(true);
 		var command = new FlagCommand();
-		var run1 = Cli.process(['-b', 'myarg'], command);
-		run1.handle(function(_)
-			result = result && 
-				isTrue(command.force) &&
-				equals('run myarg', command.result())
-		);
+		return Cli.process(['--force', 'myarg'], command)
+			.map(function(code) return isTrue(command.force) && equals('run myarg', command.result()));
+	}
+	
+	@:describe('Int Flag')
+	public function testInt() {
 		var command = new FlagCommand();
-		var run2 = Cli.process(['--force', 'myarg'], command);
-		run2.handle(function(_)
-			result = result && 
-				isTrue(command.force) &&
-				equals('run myarg', command.result())
-		);
-		return Future.ofMany([run1, run2]).map(function(_) return result);
+		return Cli.process(['--int', '123','myarg'], command)
+			.map(function(code) return equals(123, command.int) && equals('run myarg', command.result()));
+	}
+	
+	@:describe('Float Flag')
+	public function testFloat() {
+		var command = new FlagCommand();
+		return Cli.process(['--float', '1.23', 'myarg'], command)
+			.map(function(code) return equals(1.23, command.float) && equals('run myarg', command.result()));
+	}
+	
+	@:describe('Int Array Flag')
+	public function testInts() {
+		var command = new FlagCommand();
+		return Cli.process(['--ints', '123', '--ints', '234', '--ints', '456', 'myarg'], command)
+			.map(function(code) return equals('[123,234,456]', haxe.Json.stringify(command.ints)) && equals('run myarg', command.result()));
+	}
+	
+	@:describe('Float Array Flag')
+	public function testFloats() {
+		var command = new FlagCommand();
+		return Cli.process(['--floats', '1.23', '--floats', '2.34', '--floats', '3.45', 'myarg'], command)
+			.map(function(code) return equals('[1.23,2.34,3.45]', haxe.Json.stringify(command.floats)) && equals('run myarg', command.result()));
+	}
+	
+	@:describe('String Array Flag')
+	public function testStrings() {
+		var command = new FlagCommand();
+		return Cli.process(['--strings', 'a', '--strings', 'b', '--strings', 'c', 'myarg'], command)
+			.map(function(code) return equals('["a","b","c"]', haxe.Json.stringify(command.strings)) && equals('run myarg', command.result()));
+	}
+	
+	@:describe('Custom Map')
+	public function testCustomMap() {
+		var command = new FlagCommand();
+		return Cli.process(['--map', 'a=1,b=2,c=3', 'myarg'], command)
+			.map(function(code) return equals('a=>1,b=>2,c=>3', command.map.toString()) && equals('run myarg', command.result()));
 	}
 }
 
@@ -108,8 +137,34 @@ class FlagCommand extends DebugCommand {
 	@:alias('b')
 	public var force:Bool;
 	
+	public var int:Int;
+	public var float:Float;
+	
+	public var ints:Array<Int>;
+	public var floats:Array<Float>;
+	public var strings:Array<String>;
+	
+	public var map:CustomMap;
+	
 	@:defaultCommand
 	public function run(args:Array<String>) {
 		debug = 'run ' + args.join(',');
 	}
 }
+
+@:forward
+abstract CustomMap(StringMap<Int>) from StringMap<Int> to StringMap<Int> {
+	@:from
+	public static function fromString(v:String):CustomMap {
+		var map = new StringMap<Int>();
+		for(i in v.split(',')) switch i.split('=') {
+			case [key, value]: map.set(key, (value:tink.Stringly));
+			default: throw 'Invalid format';
+		}
+		return map;
+	}
+	
+	public function toString() {
+		return [for(key in this.keys()) '$key=>' + this.get(key)].join(',');
+	}
+} 
