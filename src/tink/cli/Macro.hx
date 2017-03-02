@@ -269,8 +269,6 @@ class Macro {
 									var restLocation = -1;
 									var promptLocation = -1;
 									
-									var promptType = (macro:tink.cli.Prompt).toType().sure();
-									
 									for(i in 0...args.length) {
 										var arg = args[i];
 										switch arg.t.reduce() {
@@ -279,7 +277,7 @@ class Macro {
 												requiredParams--;
 												restLocation = i;
 												
-											case t if(Context.unify(t, promptType)):
+											case _.getID() => 'tink.cli.Prompt':
 												if(promptLocation != -1)  command.field.pos.makeFailure('A command can only accept at most one "prompt" argument').sure();
 												requiredParams--;
 												promptLocation = i;
