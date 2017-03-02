@@ -35,7 +35,7 @@ class Macro {
 		var fields = [];
 		for(command in info.commands) {
 			if(!command.isDefault) cmdCases.push({
-				values: [macro $v{command.name}],
+				values: [for(name in command.names) macro $v{name}],
 				guard:null,
 				expr: buildCommandCall(command),
 			});
@@ -124,11 +124,12 @@ class Macro {
 		
 		for(field in cls.fields.get()) if(field.isPublic) {
 			
-			function addCommand(name:String, isDefault = false) {
-				switch info.commands.find(function(c) return c.name == name) {
-					case null: info.commands.push({name: name, isDefault: isDefault, field: field});
-					default: Context.error('Duplicate command: $name', field.pos);
+			function addCommand(names:Array<String>, isDefault = false) {
+				for(command in info.commands) {
+					for(n in names) if(command.names.indexOf(n) != -1)
+						field.pos.makeFailure('Duplicate command: $n').sure();
 				}
+				info.commands.push({names: names, isDefault: isDefault, field: field});
 			}
 			
 			function addFlag(names:Array<String>, aliases:Array<Int>) {
@@ -151,23 +152,26 @@ class Macro {
 				}
 			}
 			
-			var command = null;
+			var commands = [];
 			var isDefault = false;
 			
 			switch field.meta.extract(':defaultCommand') {
-				case [v]: command = field.name; isDefault = true;
+				case [v]: isDefault = true;
 				default:
 			}
 			
 			switch field.meta.extract(':command') {
 				case []: // not command
-				case [{params: []}]: command = field.name;
-				case [{params: [{expr: EConst(CString(v))}]}]: command = v;
-				default: Context.error('Invalid @:command meta', field.pos);
+				case [{params: []}]:
+					commands.push(field.name);
+				case [{params: params}]:
+					for(p in params) commands.push(p.getString().sure());
+				case v:
+					v[1].pos.makeFailure('Invalid @:command meta');
 			}
 			
-			if(command != null) {
-				addCommand(command, isDefault);
+			if(commands.length > 0 || isDefault) {
+				addCommand(commands, isDefault);
 				continue;
 			}
 			
@@ -222,7 +226,7 @@ class Macro {
 	
 	static function buildCommandCall(command:Command) {
 		var args = command.isDefault ? macro args : macro args.slice(1);
-		return macro $i{'run_' + command.name}(
+		return macro $i{'run_' + command.field.name}(
 			switch processArgs($args) {
 				case Success(args): args;
 				case Failure(f): return tink.core.Outcome.Failure(f);
@@ -233,7 +237,7 @@ class Macro {
 	static function buildCommandField(command:Command):Field {
 		return {
 			access: [],
-			name: 'run_' + command.name,
+			name: 'run_' + command.field.name,
 			kind: FFun({
 				args: [{
 					name: 'args',
@@ -305,7 +309,7 @@ typedef ClassInfo = {
 }
 
 typedef Command = {
-	name:String,
+	names:Array<String>,
 	isDefault:Bool,
 	field:ClassField,
 }

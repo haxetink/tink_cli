@@ -38,6 +38,16 @@ class TestCommand {
 			.map(function(code) return equals('defaultInit a,b,c', command.init.result()));
 	}
 	
+	@:describe('Multi Name')
+	public function testMultiName() {
+		function run(cmd:String) {
+			var command = new EntryCommand();
+			return Cli.process([cmd], command).map(function(_) return command);
+		}
+		return run('multi1').and(run('multi2'))
+			.map(function(o) return equals('multi', o.a.result()) && equals('multi', o.b.result()));
+	}
+	
 	@:describe('Const Result')
 	public function testConst() {
 		var command = new EntryCommand();
@@ -91,6 +101,11 @@ class EntryCommand extends DebugCommand {
 	@:command('uninst')
 	public function uninstall(path:String, retries:Int) {
 		debug = 'uninstall $path $retries';
+	}
+	
+	@:command('multi1', 'multi2')
+	public function multi() {
+		debug = 'multi';
 	}
 	
 	@:defaultCommand
