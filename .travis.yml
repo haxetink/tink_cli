@@ -8,7 +8,7 @@ os:
   - osx
   
 haxe:
-  - "3.2.1"
+  - "3.4.0"
   - development
   
 matrix:
@@ -16,8 +16,14 @@ matrix:
     - haxe: development
     
 install:
+  - haxelib git tink_unittest https://github.com/kevinresol/tink_unittest
   - haxelib install travix
   - haxelib run travix install
 
 script:
-  - haxelib run travix node
+  - haxelib run travix node -lib tink_unittest
+  - haxelib run travix cs -lib tink_unittest
+  - haxelib run travix java -lib tink_unittest
+  - haxelib run travix python -lib tink_unittest
+  - haxelib run travix php -lib tink_unittest
+  - haxelib run travix cpp -lib tink_unittest

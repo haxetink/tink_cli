@@ -9,17 +9,22 @@ class Haxe {
 }
 
 class Command {
+	@:flag('-js')
 	public var js:String;
+	
+	@:flag('-lib')
 	public var lib:Array<String>;
+	
+	@:flag('-main')
 	public var main:String;
 	
 	public function new() {}
 	
 	@:defaultCommand
 	public function run(rest:Array<String>) {
-		trace('js: $js');
-		trace('lib: $lib');
-		trace('main: $main');
-		trace('rest: $rest');
+		Sys.println('js: $js');
+		Sys.println('lib: $lib');
+		Sys.println('main: $main');
+		Sys.println('rest: $rest');
 	}
 }

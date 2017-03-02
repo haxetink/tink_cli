@@ -218,6 +218,8 @@ abstract CustomMap(StringMap<Int>) from StringMap<Int> to StringMap<Int> {
 	}
 	
 	public function toString() {
-		return [for(key in this.keys()) '$key=>' + this.get(key)].join(',');
+		var keys = [for(key in this.keys()) key];
+		keys.sort(Reflect.compare);
+		return [for(key in keys) '$key=>' + this.get(key)].join(',');
 	}
 } 

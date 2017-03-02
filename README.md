@@ -1,5 +1,6 @@
 # tink_cli
-Stealing the tink name again, for a cli framework
+
+Write command line tools with ~~ease~~ Haxe.
 
 ## Usage
 

@@ -1,2 +1,4 @@
 -cp tests
 -main RunTests
+
+-dce full
