@@ -32,9 +32,15 @@ to run the function with `./yourscript`.
 By default the framework infer the command name from the method name,
 you can provide a parameter to the metadata like `@:command('my-cmd')` to change that.
 
-#### Function signature:
+Also, if you tag a `public var` with @:command, it will be treated as a sub-command. For instance:
 
-TODO...
+```haxe
+@:command
+public var sub:AnotherCommand;
+```
+
+In this case, when the program is called with `./yourscript sub -a`, 
+the default command in `AnotherCommand` will run, with the argument `-a`
 
 ### Data Types
 
@@ -64,12 +70,14 @@ For example, `--force` is used instead of `--force true` to set `force = true`. 
 string is considered as a Rest argument.
 
 Rest argument is a list of strings which are not consumed by the flag parser. You can capture it in a command with
-an `Array<String>`. For example:
+`Rest<String>`. For example:
 
 ```haxe
 @:defaultCommand
-public function run(rest:Array<String>) {}
+public function run(rest:Rest<String>) {}
 ```
+
+Note that at most one Rest argument may appear in the list.
 
 ### User Input
 
