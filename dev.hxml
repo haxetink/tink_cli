@@ -4,6 +4,7 @@ tests.hxml
 
 -lib hxnodejs
 -lib tink_cli
+-lib tink_unittest
 -lib travix
 
 -dce full
