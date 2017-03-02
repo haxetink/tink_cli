@@ -14,6 +14,7 @@
   "url": "https://github.com/kevinresol/tink_cli/",
   "dependencies": {
     "tink_macro": "",
-    "tink_stringly": ""
+    "tink_stringly": "",
+    "tink_io": ""
   }
 }

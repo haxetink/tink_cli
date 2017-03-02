@@ -1,6 +1,6 @@
 tests.hxml
 
--js bin/node/index.js
+-js bin/node/tests.js
 
 -lib hxnodejs
 -lib tink_cli

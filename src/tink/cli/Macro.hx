@@ -224,16 +224,18 @@ class Macro {
 							}
 							
 							var ret = switch ret.reduce() {
-								case TAbstract(_.get() => {name: 'Future'}, [TEnum(_.get() => {name: 'Outcome'}, [t, _])])
-								| TEnum(_.get() => {name: 'Outcome'}, [t, _])
-								| TAbstract(_.get() => {name: 'Future'}, [t]): t;
+								case TAbstract(_.get() => {pack: ['tink', 'core'], name: 'Promise'}, [t])
+								| TAbstract(_.get() => {pack: ['tink', 'core'], name: 'Future'}, [TEnum(_.get() => {pack: ['tink', 'core'], name: 'Outcome'}, [t, _])])
+								| TEnum(_.get() => {pack: ['tink', 'core'], name: 'Outcome'}, [t, _])
+								| TAbstract(_.get() => {pack: ['tink', 'core'], name: 'Future'}, [t]): t;
 								case t: t;
 							}
 							
 							switch ret {
 								case v if(v.getID() == 'Void'):
 									expr = expr.concat(macro tink.core.Noise.Noise.Noise);
-								case v if(v.getID() == 'tink.core.Noise'): // ok
+								case v if(v.getID() == 'tink.core.Noise'):
+									 // ok
 								case TAnonymous(_): 
 									var ct = ret.toComplex();
 									expr = macro ($expr:tink.core.Promise<$ct>);
@@ -241,6 +243,7 @@ class Macro {
 									var ct = id == null ? macro:tink.core.Noise : ret.toComplex();
 									expr = macro ($expr:tink.core.Promise<$ct>);
 							}
+							
 							macro return $expr;
 							
 						default: throw 'assert';
