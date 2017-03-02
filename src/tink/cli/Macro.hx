@@ -31,10 +31,10 @@ class Macro {
 		var info = preprocess(cls);
 		
 		// commands
-		var cases = [];
+		var cmdCases = [];
 		var fields = [];
 		for(command in info.commands) {
-			if(!command.isDefault) cases.push({
+			if(!command.isDefault) cmdCases.push({
 				values: [macro $v{command.name}],
 				guard:null,
 				expr: buildCommandCall(command),
@@ -63,11 +63,13 @@ class Macro {
 				default:
 					macro $access = (args[++current]:tink.Stringly);
 			}
+			
 			flagCases.push({
 				values: [for(name in flag.names) macro $v{'--$name'}],
 				guard: null,
 				expr: assignment,
 			});
+			
 			aliasCases.push({
 				values: [for(alias in flag.aliases) macro $v{alias}],
 				guard: null,
@@ -83,7 +85,7 @@ class Macro {
 		var def = macro class $clsname extends tink.cli.Router<$ct> {
 			
 			override function process(args:Array<String>) return {
-				${ESwitch(macro args[0], cases, buildCommandCall(defCommand)).at()}
+				${ESwitch(macro args[0], cmdCases, buildCommandCall(defCommand)).at()}
 			}
 			
 			override function processFlag(args:Array<String>, index:Int) {
@@ -111,14 +113,17 @@ class Macro {
 	}
 	
 	static function preprocess(cls:ClassType):ClassInfo {
-		var commands:Array<Command> = [];
-		var flags:Array<Flag> = [];
+		var info:ClassInfo = {
+			aliasDisabled: false,
+			flags: [],
+			commands: [],
+		}
 		
 		for(field in cls.fields.get()) if(field.isPublic) {
 			
 			function addCommand(name:String, isDefault = false) {
-				switch commands.find(function(c) return c.name == name) {
-					case null: commands.push({name: name, isDefault: isDefault, field: field});
+				switch info.commands.find(function(c) return c.name == name) {
+					case null: info.commands.push({name: name, isDefault: isDefault, field: field});
 					default: Context.error('Duplicate command: $name', field.pos);
 				}
 			}
@@ -126,7 +131,7 @@ class Macro {
 			function addFlag(names:Array<String>, aliases:Array<Int>) {
 				var usedName = null;
 				var usedAlias = null;
-				for(flag in flags) {
+				for(flag in info.flags) {
 					for(n in names) if(flag.names.indexOf(n) != -1) {
 						usedName = n;
 						break;
@@ -137,7 +142,7 @@ class Macro {
 					}
 				}
 				switch [usedName, usedAlias]  {
-					case [null, null]: flags.push({names: names, aliases: aliases, field: field});
+					case [null, null]: info.flags.push({names: names, aliases: aliases, field: field});
 					case [null, v]: Context.error('Duplicate flag alias: ' + String.fromCharCode(v), field.pos);
 					case [v, _]: Context.error('Duplicate flag name: $v', field.pos);
 				}
@@ -185,11 +190,7 @@ class Macro {
 			}
 		}
 		
-		return {
-			aliasDisabled: false,
-			flags: flags,
-			commands: commands,
-		}
+		return info;
 	}
 	
 	static function buildCommandCall(command:Command) {
