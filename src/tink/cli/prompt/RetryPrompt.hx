@@ -1,25 +1,22 @@
 package tink.cli.prompt;
 
-import haxe.io.Bytes;
-import tink.io.Sink;
-import tink.io.Source;
 import tink.cli.Prompt;
 
 using tink.CoreApi;
 
 class RetryPrompt implements Prompt {
 	var trials:Int;
+	var proxy:Prompt;
 	
-	public function new(trials) {
+	public function new(trials, proxy) {
 		this.trials = trials;
+		this.proxy = proxy;
 	}
 	
 	public function prompt(type:PromptType):Promise<String> {
-		var simple = new SimplePrompt();
-		
 		return switch type {
 			case Simple(_):
-				simple.prompt(type);
+				proxy.prompt(type);
 			case MultipleChoices(v, c):
 				Future.async(function(cb) {
 					var remaining = trials;
@@ -30,7 +27,7 @@ class RetryPrompt implements Prompt {
 								else cb(Failure(new Error('Maximum retries reached')));
 						}
 						
-						simple.prompt(type).handle(function(o) switch o {
+						proxy.prompt(type).handle(function(o) switch o {
 							case Success(result):
 								if(c.indexOf(result) == -1)
 									retry();
