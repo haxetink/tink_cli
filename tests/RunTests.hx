@@ -9,7 +9,7 @@ class RunTests {
 			new TestCommand(),
 			new TestFlag(),
 			new TestAliasDisabled(),
-			// new TestPrompt(),
+			new TestPrompt(),
 		]).handle(function(result) travix.Logger.exit(result.errors));
 		
 	}
