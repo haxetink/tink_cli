@@ -54,9 +54,18 @@ class Macro {
 		var aliasCases = [];
 		for(flag in flags) {
 			var name = flag.field.name;
-			var assignment = switch flag.field.type.getID() {
-				case 'Bool': macro command.$name = true;
-				default: macro command.$name = args[++current];
+			var access = macro command.$name;
+			
+			var assignment = switch flag.field.type {
+				case _.getID() => 'Bool':
+					macro $access = true;
+				case TInst(_.get() => {pack: [], name: 'Array'}, _):
+					macro {
+						if($access == null) $access = [];
+						$access.push((args[++current]:tink.Stringly));
+					}
+				default:
+					macro $access = (args[++current]:tink.Stringly);
 			}
 			flagCases.push({
 				values: [for(name in flag.names) macro $v{'--$name'}],
