@@ -125,6 +125,50 @@ class TestFlag {
 		return Cli.process(['--map', 'a=1,b=2,c=3', 'myarg'], command)
 			.map(function(code) return equals('a=>1,b=>2,c=>3', command.map.toString()) && equals('run myarg', command.result()));
 	}
+	
+	@:describe('Multiple Flag Names')
+	public function testMultipleFlagNames() {
+		var result = isTrue(true);
+		
+		function run(i) {
+			var command = new FlagCommand();
+			var run1 = Cli.process([i, 'multi', 'myarg'], command);
+			run1.handle(function(_)
+				result = result && 
+					equals('multi', command.multi) && 
+					equals('run myarg', command.result())
+			);
+			return run1;
+		}
+		
+		return Future.ofMany([
+			run('--multi1'),
+			run('--multi2'),
+			run('-m'),
+		]).map(function(_) return result);
+	}
+	
+	@:describe('Multiple Aliases')
+	public function testMultipleAliases() {
+		var result = isTrue(true);
+		
+		function run(i) {
+			var command = new FlagCommand();
+			var run1 = Cli.process([i, 'multi', 'myarg'], command);
+			run1.handle(function(_)
+				result = result && 
+					equals('multi', command.multiAlias) && 
+					equals('run myarg', command.result())
+			);
+			return run1;
+		}
+		
+		return Future.ofMany([
+			run('-x'),
+			run('-y'),
+			run('-z'),
+		]).map(function(_) return result);
+	}
 }
 
 class FlagCommand extends DebugCommand {
@@ -133,6 +177,12 @@ class FlagCommand extends DebugCommand {
 	
 	@:flag('another-name')
 	public var path:String;
+	
+	@:flag('multi1', 'multi2')
+	public var multi:String;
+	
+	@:alias('x', 'y', 'z')
+	public var multiAlias:String;
 	
 	@:alias('b')
 	public var force:Bool;

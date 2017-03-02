@@ -170,21 +170,34 @@ class Macro {
 			
 			switch field.kind {
 				case FVar(_):
-					var flag = field.name;
+					var flags = [];
 					switch field.meta.extract(':flag') {
-						case []: // do nothing
-						case [{params: [{expr: EConst(CString(v))}]}]: flag = v;
-						default: Context.error('Invalid @:flag meta', field.pos);
+						case []:
+							flags.push(field.name);
+						case [{params: params}]:
+							for(p in params) flags.push(p.getString().sure());
+						case v:
+							v[1].pos.makeFailure('Only a single @:flag meta is allowed').sure();
 					}
 					
-					var alias = flag.charCodeAt(0);
+					var aliases = [];
 					switch field.meta.extract(':alias') {
-						case []: // do nothing
-						case [{params: [{expr: EConst(CString(v))}]}] if(v.length == 1): alias = v.charCodeAt(0);
-						default: Context.error('Invalid @:alias meta', field.pos);
+						case []:
+							for(flag in flags) {
+								var code = flag.charCodeAt(0);
+								if(aliases.indexOf(code) == -1) aliases.push(code);
+							}
+						case [{params: params}]:
+							for(p in params) {
+								var v = p.getString().sure();
+								if(v.length == 1) aliases.push(v.charCodeAt(0));
+								else p.pos.makeFailure('Alias must be a single letter').sure();
+							}
+						case v:
+							v[1].pos.makeFailure('Only a single @:alias meta is allowed').sure();
 					}
 					
-					addFlag([flag], [alias]);
+					addFlag(flags, aliases);
 				
 				case FMethod(_):
 			}
