@@ -30,6 +30,13 @@ class TestCommand {
 			.map(function(code) return equals(0, code) && equals('uninstall mypath 3', command.result()));
 	}
 	
+	@:describe('Sub Command')
+	public function testSub() {
+		var command = new EntryCommand();
+		return Cli.process(['init', 'a', 'b', 'c'], command)
+			.map(function(code) return equals(0, code) && equals('defaultInit a,b,c', command.init.result()));
+	}
+	
 	@:describe('Const Exit Code')
 	public function testConstExitCode() {
 		var command = new EntryCommand();
@@ -74,7 +81,7 @@ class EntryCommand extends DebugCommand {
 	@:alias('b')
 	public var force:String;
 	
-	@:command('init2')
+	@:command('init')
 	public var init = new InitCommand();
 	
 	@:command
@@ -102,7 +109,6 @@ class EntryCommand extends DebugCommand {
 class InitCommand extends DebugCommand{
 	@:defaultCommand
 	public function defaultInit(args:Array<String>) {
-		trace('defaultInit ' + args.join(','));
-		return 9;
+		debug = 'defaultInit ' + args.join(',');
 	}
 }
