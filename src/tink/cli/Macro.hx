@@ -28,14 +28,12 @@ class Macro {
 	}
 	
 	static function buildClass(cls:ClassType) {
-		var p = preprocess(cls);
-		var commands = p.a;
-		var flags = p.b;
+		var info = preprocess(cls);
 		
 		// commands
 		var cases = [];
 		var fields = [];
-		for(command in commands) {
+		for(command in info.commands) {
 			if(!command.isDefault) cases.push({
 				values: [macro $v{command.name}],
 				guard:null,
@@ -44,15 +42,13 @@ class Macro {
 			fields.push(buildCommandField(command));
 		}
 		
-		var defCommand = commands.find(function(c) return c.isDefault);
+		var defCommand = info.commands.find(function(c) return c.isDefault);
 		if(defCommand == null) Context.error('Default command not found, tag a function with @:defaultCommand', cls.pos);
-		
-		var commandProcessor = ESwitch(macro args[0], cases, buildCommandCall(defCommand)).at();
 		
 		// flags
 		var flagCases = [];
 		var aliasCases = [];
-		for(flag in flags) {
+		for(flag in info.flags) {
 			var name = flag.field.name;
 			var access = macro command.$name;
 			
@@ -79,30 +75,32 @@ class Macro {
 			});
 		}
 		
-		var flagProcessor = macro {
-			var current = index;
-			${ESwitch(macro args[index], flagCases, macro throw "Invalid flag '" + args[index] + "'").at()}
-			return current - index;
-		}
-		
-		var aliasProcessor = macro {
-			var current = index;
-			var str = args[index];
-			for(i in 1...str.length) {
-				${ESwitch(macro str.charCodeAt(i), aliasCases, macro throw "Invalid alias '-" + str.charAt(i) + "'").at()}
-			}
-			return current - index;
-		}
-		
 		// build the type
 		var path = cls.module.split('.');
 		if(path[path.length - 1] != cls.name) path.push(cls.name);
 		var ct = TPath(path.join('.').asTypePath());
 		var clsname = 'Router' + counter++;
 		var def = macro class $clsname extends tink.cli.Router<$ct> {
-			override function process(args:Array<String>) return $commandProcessor;
-			override function processFlag(args:Array<String>, index:Int) $flagProcessor;
-			override function processAlias(args:Array<String>, index:Int) $aliasProcessor;
+			
+			override function process(args:Array<String>) return {
+				${ESwitch(macro args[0], cases, buildCommandCall(defCommand)).at()}
+			}
+			
+			override function processFlag(args:Array<String>, index:Int) {
+				var current = index;
+				${ESwitch(macro args[index], flagCases, macro throw "Invalid flag '" + args[index] + "'").at()}
+				return current - index;
+			}
+			
+			override function processAlias(args:Array<String>, index:Int) {
+				var current = index;
+				var str = args[index];
+				for(i in 1...str.length)
+					${ESwitch(macro str.charCodeAt(i), aliasCases, macro throw "Invalid alias '-" + str.charAt(i) + "'").at()}
+					
+				return current - index;
+			}
+			
 		}
 		
 		def.fields = def.fields.concat(fields);
@@ -112,7 +110,7 @@ class Macro {
 		return Context.getType('tink.cli.$clsname');
 	}
 	
-	static function preprocess(cls:ClassType) {
+	static function preprocess(cls:ClassType):ClassInfo {
 		var commands:Array<Command> = [];
 		var flags:Array<Flag> = [];
 		
@@ -187,7 +185,11 @@ class Macro {
 			}
 		}
 		
-		return new Pair(commands, flags);
+		return {
+			aliasDisabled: false,
+			flags: flags,
+			commands: commands,
+		}
 	}
 	
 	static function buildCommandCall(command:Command) {
@@ -261,6 +263,12 @@ class Macro {
 				process(command.field.type);
 		}
 	}
+}
+
+typedef ClassInfo = {
+	commands:Array<Command>,
+	flags:Array<Flag>,
+	aliasDisabled:Bool,
 }
 
 typedef Command = {
