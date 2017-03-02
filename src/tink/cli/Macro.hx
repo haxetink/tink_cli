@@ -267,6 +267,10 @@ class Macro {
 								default:
 									var requiredParams = args.length;
 									var restLocation = -1;
+									var promptLocation = -1;
+									
+									var promptType = (macro:tink.cli.Prompt).toType().sure();
+									
 									for(i in 0...args.length) {
 										var arg = args[i];
 										switch arg.t.reduce() {
@@ -274,28 +278,41 @@ class Macro {
 												if(restLocation != -1) command.field.pos.makeFailure('A command can only accept at most one Rest<T> argument').sure();
 												requiredParams--;
 												restLocation = i;
+												
+											case t if(Context.unify(t, promptType)):
+												if(promptLocation != -1)  command.field.pos.makeFailure('A command can only accept at most one "prompt" argument').sure();
+												requiredParams--;
+												promptLocation = i;
+										
 											default:
+												
 										}
 									}
 									
-									var expr = macro @:pos(pos) if(args.length < $v{requiredParams}) return tink.core.Outcome.Failure(new tink.core.Error('Insufficient arguments. Expected: ' + $v{requiredParams} + ', Got: ' + args.length));
 									
 									var cargs = [];
+									var cargsNum = args.length;
+									if(promptLocation != -1) cargsNum--;
+									
+									var expr = macro @:pos(pos) if(args.length < $v{requiredParams}) return tink.core.Outcome.Failure(new tink.core.Error('Insufficient arguments. Expected: ' + $v{requiredParams} + ', Got: ' + args.length));
+									
 									if(restLocation == -1) {
 										
-										for(i in 0...args.length) cargs.push(macro @:pos(pos) args[$v{i}]);
+										for(i in 0...cargsNum) cargs.push(macro @:pos(pos) args[$v{i}]);
 										
 									} else {
 										
 										for(i in 0...restLocation) cargs.push(macro @:pos(pos) args[$v{i}]);
 										
-										var remaining = args.length - restLocation - 1;
+										var remaining = cargsNum - restLocation - 1;
 										cargs.push(macro @:pos(pos) args.slice($v{restLocation}, args.length - $v{remaining}));
 										
 										for(i in 0...remaining) cargs.push(macro @:pos(pos) args[args.length - $v{remaining - i}]);
 										
 									}
-										
+									
+									if(promptLocation != -1) cargs.insert(promptLocation, macro prompt);
+									
 									expr = expr.concat(macro command.$name($a{cargs}));
 							}
 							

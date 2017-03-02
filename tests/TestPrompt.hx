@@ -18,8 +18,8 @@ class PromptCommand {
 	public function new() {}
 	
 	@:defaultCommand
-	public function run():Promise<String> {
-		var result = new RetryPrompt(3).prompt(MultipleChoices('Install?', ['y','n']));
+	public function run(prompt:Prompt):Promise<String> {
+		var result = prompt.prompt(MultipleChoices('Install?', ['y','n']));
 		result.handle(function(o) switch o {
 			case Success(result): trace('Got: $result');
 			case Failure(e): trace('Error: ' + e.toString());
