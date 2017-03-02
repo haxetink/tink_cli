@@ -3,11 +3,17 @@ package tink;
 import haxe.macro.Expr;
 import haxe.macro.Context;
 
+import tink.cli.Prompt;
 import tink.cli.ExitCode;
 
+#if macro
+using tink.MacroApi;
+#end
+
 class Cli {
-	public static macro function process<Target:{}>(args:ExprOf<Array<String>>, target:ExprOf<Target>):ExprOf<ExitCode> {
+	public static macro function process<Target:{}>(args:ExprOf<Array<String>>, target:ExprOf<Target>, ?prompt:ExprOf<Prompt>):ExprOf<ExitCode> {
 		var ct = Context.toComplexType(Context.typeof(target));
-		return macro new tink.cli.macro.Router<$ct>($target).process($args);
+		prompt = prompt.ifNull(macro new tink.cli.prompt.SimplePrompt());
+		return macro new tink.cli.macro.Router<$ct>($target, $prompt).process($args);
 	}
 }

@@ -4,8 +4,11 @@ using tink.CoreApi;
 
 class Router<T> {
 	var command:T;
-	public function new(command) {
+	var prompt:Prompt;
+	
+	public function new(command, prompt) {
 		this.command = command;
+		this.prompt = prompt;
 	}
 	
 	public function process(args:Array<String>):ExitCode {
