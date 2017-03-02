@@ -11,26 +11,28 @@ using tink.CoreApi;
 class Macro {
 	
 	static var counter = 0;
+	static var cache = new tink.macro.TypeMap<Type>();
 	
 	public static function build() {
 		switch Context.getLocalType() {
-			case TInst(_, [TInst(_.get() => cls, _)]): return buildClass(cls);
+			case TInst(_, [type]):
+				if(!cache.exists(type)) {
+					cache.set(type, buildClass(switch type {
+						case TInst(_.get() => cls, _): cls;
+						default: throw 'assert';
+					}));
+				}
+				return cache.get(type);
 			default: throw 'assert';
 		}
 	}
 	
 	static function buildClass(cls:ClassType) {
-		
 		var p = preprocess(cls);
 		var commands = p.a;
 		var flags = p.b;
 		
-		trace(flags.map(function(f) return f.name + ':' + String.fromCharCode(f.alias)));
-		
-		var path = cls.module.split('.');
-		if(path[path.length - 1] != cls.name) path.push(cls.name);
-		var ct = TPath(path.join('.').asTypePath());
-		
+		// commands
 		var cases = [];
 		var fields = [];
 		for(command in commands) {
@@ -45,11 +47,53 @@ class Macro {
 		var defCommand = commands.find(function(c) return c.isDefault);
 		if(defCommand == null) Context.error('Default command not found, tag a function with @:defaultCommand', cls.pos);
 		
-		var eSwitch = ESwitch(macro args[0], cases, buildCommandCall(defCommand)).at();
+		var commandProcessor = ESwitch(macro args[0], cases, buildCommandCall(defCommand)).at();
 		
+		// flags
+		var flagCases = [];
+		var aliasCases = [];
+		for(flag in flags) {
+			var name = flag.field.name;
+			var assignment = switch flag.field.type.getID() {
+				case 'Bool': macro command.$name = true;
+				default: macro command.$name = args[++current];
+			}
+			flagCases.push({
+				values: [for(name in flag.names) macro $v{'--$name'}],
+				guard: null,
+				expr: assignment,
+			});
+			aliasCases.push({
+				values: [for(alias in flag.aliases) macro $v{alias}],
+				guard: null,
+				expr: assignment,
+			});
+		}
+		
+		var flagProcessor = macro {
+			var current = index;
+			${ESwitch(macro args[index], flagCases, macro throw "Invalid flag '" + args[index] + "'").at()}
+			return current - index;
+		}
+		
+		var aliasProcessor = macro {
+			var current = index;
+			var str = args[index];
+			for(i in 1...str.length) {
+				${ESwitch(macro str.charCodeAt(i), aliasCases, macro throw "Invalid alias '-" + str.charAt(i) + "'").at()}
+			}
+			return current - index;
+		}
+		
+		// build the type
+		var path = cls.module.split('.');
+		if(path[path.length - 1] != cls.name) path.push(cls.name);
+		var ct = TPath(path.join('.').asTypePath());
 		var clsname = 'Router' + counter++;
 		var def = macro class $clsname extends tink.cli.Router<$ct> {
-			override function process(args:Array<String>) return $eSwitch;
+			override function process(args:Array<String>) return $commandProcessor;
+			override function processFlag(args:Array<String>, index:Int) $flagProcessor;
+			override function processAlias(args:Array<String>, index:Int) $aliasProcessor;
 		}
 		
 		def.fields = def.fields.concat(fields);
@@ -72,11 +116,23 @@ class Macro {
 				}
 			}
 			
-			function addFlag(name:String, alias:Int) {
-				switch [flags.find(function(f) return f.name == name), flags.find(function(f) return f.alias == alias)]  {
-					case [null, null]: flags.push({name: name, alias: alias, field: field});
-					case [null, v]: Context.error('Duplicate flag alias: ' + String.fromCharCode(v.alias), field.pos);
-					case [v, _]: Context.error('Duplicate flag name: $name', field.pos);
+			function addFlag(names:Array<String>, aliases:Array<Int>) {
+				var usedName = null;
+				var usedAlias = null;
+				for(flag in flags) {
+					for(n in names) if(flag.names.indexOf(n) != -1) {
+						usedName = n;
+						break;
+					}
+					for(a in aliases) if(flag.aliases.indexOf(a) != -1) {
+						usedAlias = null;
+						break;
+					}
+				}
+				switch [usedName, usedAlias]  {
+					case [null, null]: flags.push({names: names, aliases: aliases, field: field});
+					case [null, v]: Context.error('Duplicate flag alias: ' + String.fromCharCode(v), field.pos);
+					case [v, _]: Context.error('Duplicate flag name: $v', field.pos);
 				}
 			}
 			
@@ -116,7 +172,7 @@ class Macro {
 						default: Context.error('Invalid @:alias meta', field.pos);
 					}
 					
-					addFlag(flag, alias);
+					addFlag([flag], [alias]);
 				
 				case FMethod(_):
 			}
@@ -127,7 +183,7 @@ class Macro {
 	
 	static function buildCommandCall(command:Command) {
 		var args = command.isDefault ? macro args : macro args.slice(1);
-		return macro $i{'run_' + command.name}($args);
+		return macro $i{'run_' + command.name}(processArgs($args));
 	}
 	
 	static function buildCommandField(command:Command):Field {
@@ -167,9 +223,24 @@ class Macro {
 									macro command.$name($a{cargs});
 							}
 							
-							// default exit code for a function that returns void
-							if(ret.getID() == 'Void') expr = expr.concat(macro 0);
+							var ret = switch ret.reduce() {
+								case TAbstract(_.get() => {name: 'Future'}, [TEnum(_.get() => {name: 'Outcome'}, [t, _])])
+								| TEnum(_.get() => {name: 'Outcome'}, [t, _])
+								| TAbstract(_.get() => {name: 'Future'}, [t]): t;
+								case t: t;
+							}
 							
+							switch ret {
+								case v if(v.getID() == 'Void'):
+									expr = expr.concat(macro tink.core.Noise.Noise.Noise);
+								case v if(v.getID() == 'tink.core.Noise'): // ok
+								case TAnonymous(_): 
+									var ct = ret.toComplex();
+									expr = macro ($expr:tink.core.Promise<$ct>);
+								case _.getID() => id:
+									var ct = id == null ? macro:tink.core.Noise : ret.toComplex();
+									expr = macro ($expr:tink.core.Promise<$ct>);
+							}
 							macro return $expr;
 							
 						default: throw 'assert';
@@ -187,7 +258,7 @@ typedef Command = {
 }
 
 typedef Flag = {
-	name:String,
-	alias:Int,
+	names:Array<String>,
+	aliases:Array<Int>,
 	field:ClassField,
 }
