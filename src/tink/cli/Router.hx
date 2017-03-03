@@ -11,7 +11,7 @@ class Router<T> {
 		this.prompt = prompt;
 	}
 	
-	public function process(args:Array<String>):ExitCode {
+	public function process(args:Array<String>):Result {
 		return Noise;
 	}
 	
@@ -23,7 +23,6 @@ class Router<T> {
 				var arg = args[i];
 				
 				if(arg.charCodeAt(0) == '-'.code) { 
-					trace(arg);
 					switch processFlag(args, i) {
 						case -1: // unrecognized flag
 							if(arg.charCodeAt(1) != '-'.code) {

@@ -85,7 +85,7 @@ class Macro {
 		var clsname = 'Router' + counter++;
 		var def = macro class $clsname extends tink.cli.Router<$ct> {
 			
-			override function process(args:Array<String>):tink.cli.ExitCode return {
+			override function process(args:Array<String>):tink.cli.Result return {
 				${ESwitch(macro args[0], cmdCases, buildCommandCall(defCommand)).at()}
 			}
 			
@@ -257,7 +257,7 @@ class Macro {
 					name: 'args',
 					type: macro:Array<tink.Stringly>,
 				}],
-				ret: macro:tink.cli.ExitCode,
+				ret: macro:tink.cli.Result,
 				expr: buildCommandForwardCall(command),
 			}),
 			pos: command.field.pos,
