@@ -1,21 +1,21 @@
 {
-  "name": "tink_cli",
-  "license": "MIT",
-  "tags": [
-    "cross",
-    "cli"
-  ],
-  "classPath": "src",
-  "contributors": [
-    "kevinresol",
-    "back2dos"
-  ],
-  "releasenote": "initial release",
-  "version": "0.1.0",
-  "url": "https://github.com/haxetink/tink_cli/",
-  "dependencies": {
-    "tink_macro": "",
-    "tink_stringly": "",
-    "tink_io": ""
-  }
+	"name": "tink_cli",
+	"license": "MIT",
+	"tags": [
+		"cross",
+		"cli"
+	],
+	"classPath": "src",
+	"contributors": [
+		"kevinresol",
+		"back2dos"
+	],
+	"releasenote": "Release 0.1.0",
+	"version": "0.1.0",
+	"url": "https://github.com/haxetink/tink_cli/",
+	"dependencies": {
+		"tink_io": "",
+		"tink_stringly": "",
+		"tink_macro": ""
+	}
 }
