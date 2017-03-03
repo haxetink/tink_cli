@@ -22,19 +22,25 @@ class Router<T> {
 			while(i < args.length) {
 				var arg = args[i];
 				
-				switch processFlag(args, i) {
-					case -1: // unrecognized flag
-						if(arg.charCodeAt(0) == '-'.code)
-							switch processAlias(args, i) {
-								case -1: throw 'Unrecognized flag "$arg"';
-								case v: i += v + 1;
+				if(arg.charCodeAt(0) == '-'.code) { 
+					trace(arg);
+					switch processFlag(args, i) {
+						case -1: // unrecognized flag
+							if(arg.charCodeAt(1) != '-'.code) {
+								switch processAlias(args, i) {
+									case -1: throw 'Unrecognized alias "$arg"';
+									case v: i += v + 1;
+								}
+							} else {
+								throw 'Unrecognized flag "$arg"';
 							}
-						else {
-							rest.push(arg);
-							i++;
-						}
-					case v:
-						i += v + 1;
+							
+						case v:
+							i += v + 1;
+					}
+				} else {
+					rest.push(arg);
+					i++;
 				}
 			}
 			return rest;

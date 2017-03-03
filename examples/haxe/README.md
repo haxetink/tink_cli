@@ -1,4 +1,4 @@
-# Psuedo Command Line Tool for the Haxe Complier
+# Mockup Command Line Tool for the Haxe Complier
 
 #### Example 1 (with main class)
 `./haxe.sh -lib tink_core -lib tink_cli -js bin/index.js -main Main`

@@ -50,28 +50,29 @@ class Macro {
 		var aliasCases = [];
 		for(flag in info.flags) {
 			var name = flag.field.name;
+			var pos = flag.field.pos;
 			var access = macro command.$name;
 			
 			var assignment = switch flag.field.type {
 				case _.getID() => 'Bool':
-					macro $access = true;
+					macro @:pos(pos) $access = true;
 				case TInst(_.get() => {pack: [], name: 'Array'}, _):
-					macro {
+					macro @:pos(pos) {
 						if($access == null) $access = [];
 						$access.push((args[++current]:tink.Stringly));
 					}
 				default:
-					macro $access = (args[++current]:tink.Stringly);
+					macro @:pos(pos) $access = (args[++current]:tink.Stringly);
 			}
 			
 			if(flag.names.length > 0) flagCases.push({
-				values: [for(name in flag.names) macro $v{name}],
+				values: [for(name in flag.names) macro @:pos(pos) $v{name}],
 				guard: null,
 				expr: assignment,
 			});
 			
 			if(flag.aliases.length > 0) aliasCases.push({
-				values: [for(alias in flag.aliases) macro $v{alias}],
+				values: [for(alias in flag.aliases) macro @:pos(pos) $v{alias}],
 				guard: null,
 				expr: assignment,
 			});
@@ -236,12 +237,15 @@ class Macro {
 	
 	static function buildCommandCall(command:Command) {
 		var args = command.isDefault ? macro args : macro args.slice(1);
-		return macro $i{'run_' + command.field.name}(
-			switch processArgs($args) {
-				case Success(args): args;
-				case Failure(f): return tink.core.Outcome.Failure(f);
-			}
-		);
+		args = switch command.field.kind {
+			case FVar(_): args;
+			case FMethod(_): 
+				macro switch processArgs($args) {
+					case Success(args): args;
+					case Failure(f): return tink.core.Outcome.Failure(f);
+				}
+		}
+		return macro $i{'run_' + command.field.name}($args);
 	}
 	
 	static function buildCommandField(command:Command):Field {
