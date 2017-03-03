@@ -64,13 +64,13 @@ class Macro {
 					macro $access = (args[++current]:tink.Stringly);
 			}
 			
-			flagCases.push({
+			if(flag.names.length > 0) flagCases.push({
 				values: [for(name in flag.names) macro $v{name}],
 				guard: null,
 				expr: assignment,
 			});
 			
-			aliasCases.push({
+			if(flag.aliases.length > 0) aliasCases.push({
 				values: [for(alias in flag.aliases) macro $v{alias}],
 				guard: null,
 				expr: assignment,
@@ -117,7 +117,10 @@ class Macro {
 	
 	static function preprocess(cls:ClassType):ClassInfo {
 		var info:ClassInfo = {
-			aliasDisabled: false,
+			aliasDisabled: switch cls.meta.extract(':alias') {
+				case [{params: [macro false]}]: true;
+				default: false;
+			},
 			flags: [],
 			commands: [],
 		}
@@ -133,6 +136,8 @@ class Macro {
 			}
 			
 			function addFlag(names:Array<String>, aliases:Array<Int>) {
+				field.meta.remove(':flag');
+				field.meta.remove(':alias');
 				var usedName = null;
 				var usedAlias = null;
 				for(flag in info.flags) {
@@ -207,14 +212,19 @@ class Macro {
 									}
 						case [{params: params}]:
 							for(p in params) {
-								var v = p.getString().sure();
-								if(v.length == 1) aliases.push(v.charCodeAt(0));
-								else p.pos.makeFailure('Alias must be a single letter').sure();
+								switch p.getIdent() {
+									case Success('false'):
+										aliases = [];
+										break;
+									default: 
+										var v = p.getString().sure();
+										if(v.length == 1) aliases.push(v.charCodeAt(0));
+										else p.pos.makeFailure('Alias must be a single letter').sure();
+								}
 							}
 						case v:
 							v[1].pos.makeFailure('Only a single @:alias meta is allowed').sure();
 					}
-					
 					addFlag(flags, aliases);
 				
 				case FMethod(_):

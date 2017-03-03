@@ -170,6 +170,13 @@ class TestFlag {
 			run('-z'),
 		]).map(function(_) return result);
 	}
+	
+	@:describe('No Alias')
+	public function testNoAlias() {
+		var command = new FlagCommand();
+		return Cli.process(['-w', 'multi', 'myarg'], command)
+			.map(function(result) return isFalse(result.isSuccess()));
+	}
 }
 
 class FlagCommand extends DebugCommand {
@@ -199,6 +206,9 @@ class FlagCommand extends DebugCommand {
 	
 	@:alias('o')
 	public var map:CustomMap;
+
+	@:alias(false)
+	public var withoutalias:String;
 	
 	@:defaultCommand
 	public function run(args:Rest<String>) {
