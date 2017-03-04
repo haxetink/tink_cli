@@ -12,7 +12,7 @@ class Macro {
 	
 	static var counter = 0;
 	static var infoCache = new tink.macro.TypeMap<ClassInfo>();
-	static var cache = new tink.macro.TypeMap<Type>();
+	static var cache = new tink.macro.TypeMap<ComplexType>();
 	
 	public static function build() {
 		switch Context.getLocalType() {
@@ -180,7 +180,7 @@ class Macro {
 		
 		Context.defineType(def);
 		
-		return Context.getType('tink.cli.$clsname');
+		return TPath('tink.cli.$clsname'.asTypePath());
 	}
 	
 	static function preprocess(type:Type):ClassInfo {
