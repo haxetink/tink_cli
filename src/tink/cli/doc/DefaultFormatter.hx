@@ -43,7 +43,7 @@ class DefaultFormatter implements DocFormatter<String> {
 		
 		if(subs.length > 0) {
 			out.push('Sub Commands:');
-			out.push(subs.join(', '));
+			out.push('  ' + subs.join(', '));
 			out.push('\n');
 		}
 		
