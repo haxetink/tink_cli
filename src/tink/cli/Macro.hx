@@ -3,6 +3,7 @@ package tink.cli;
 import haxe.macro.Expr;
 import haxe.macro.Context;
 import haxe.macro.Type;
+import tink.macro.TypeMap; // https://github.com/haxetink/tink_macro/pull/11
 
 using Lambda;
 using tink.MacroApi;
@@ -11,50 +12,76 @@ using tink.CoreApi;
 class Macro {
 	
 	static var counter = 0;
-	static var infoCache = new tink.macro.TypeMap<ClassInfo>();
-	static var cache = new tink.macro.TypeMap<ComplexType>();
+	static var counters = new TypeMap<Int>();
+	static var infoCache = new TypeMap<ClassInfo>();
+	static var routerCache = new TypeMap<ComplexType>();
+	static var docCache = new TypeMap<Expr>();
 	
 	public static function build() {
 		switch Context.getLocalType() {
 			case TInst(_, [type]):
-				if(!cache.exists(type)) cache.set(type, buildClass(type));
-				return cache.get(type);
+				if(!routerCache.exists(type)) routerCache.set(type, buildClass(type));
+				return routerCache.get(type);
 			default: throw 'assert';
 		}
 	}
 	
 	public static function buildDoc(type:Type) {
 		
-		var info = preprocess(type);
-		
-		var commands = [];
-		var flags = [];
-		
-		function s2e(v:String) return macro $v{v};
-		function f2e(fields) return EObjectDecl(fields).at();
-		
-		for(command in info.commands) {
-			commands.push([
-				{field: 'isDefault', expr: macro $v{command.isDefault}},
-				{field: 'isSub', expr: macro $v{command.isSub}},
-				{field: 'names', expr: macro $a{command.names.map(s2e)}},
-				{field: 'doc', expr: macro $v{command.field.doc}},
-			]);
+		if(!docCache.exists(type)) {
+			
+			var info = preprocess(type);
+			
+			var commands = [];
+			var flags = [];
+			
+			function s2e(v:String) return macro $v{v};
+			function f2e(fields) return EObjectDecl(fields).at();
+			
+			for(command in info.commands) {
+				commands.push([
+					{field: 'isDefault', expr: macro $v{command.isDefault}},
+					{field: 'isSub', expr: macro $v{command.isSub}},
+					{field: 'names', expr: macro $a{command.names.map(s2e)}},
+					{field: 'doc', expr: macro $v{command.field.doc}},
+				]);
+			}
+			
+			for(flag in info.flags) {
+				flags.push([
+					{field: 'names', expr: macro $a{flag.names.map(s2e)}},
+					{field: 'aliases', expr: macro $a{flag.aliases.map(String.fromCharCode).map(s2e)}},
+					{field: 'doc', expr: macro $v{flag.field.doc}},
+				]);
+			}
+			
+			var clsname = 'Doc' + getCounter(type);
+			var def = macro class $clsname {
+				
+				static var doc:tink.cli.DocFormatter.DocSpec;
+				
+				public static function get() {
+					if(doc == null)
+						doc = ${
+							EObjectDecl([
+								{field: 'doc', expr: macro $v{info.cls.doc}},
+								{field: 'commands', expr: macro $a{commands.map(f2e)}},
+								{field: 'flags', expr: macro $a{flags.map(f2e)}},
+							]).at()
+						}
+					return doc;
+				}
+			}
+			
+			def.pack = ['tink', 'cli'];
+			
+			Context.defineType(def);
+			
+			docCache.set(type, macro $p{['tink', 'cli', clsname]}.get());
+			
 		}
 		
-		for(flag in info.flags) {
-			flags.push([
-				{field: 'names', expr: macro $a{flag.names.map(s2e)}},
-				{field: 'aliases', expr: macro $a{flag.aliases.map(String.fromCharCode).map(s2e)}},
-				{field: 'doc', expr: macro $v{flag.field.doc}},
-			]);
-		}
-		
-		return EObjectDecl([
-			{field: 'doc', expr: macro $v{info.cls.doc}},
-			{field: 'commands', expr: macro $a{commands.map(f2e)}},
-			{field: 'flags', expr: macro $a{flags.map(f2e)}},
-		]).at();
+		return docCache.get(type);
 	}
 	
 	static function buildClass(type:Type) {
@@ -145,7 +172,7 @@ class Macro {
 		var path = cls.module.split('.');
 		if(path[path.length - 1] != cls.name) path.push(cls.name);
 		var ct = TPath(path.join('.').asTypePath());
-		var clsname = 'Router' + counter++;
+		var clsname = 'Router' + getCounter(type);
 		var def = macro class $clsname extends tink.cli.Router<$ct> {
 			
 			override function process(args:Array<String>):tink.cli.Result {
@@ -458,6 +485,11 @@ class Macro {
 			}
 			process(command.field.type);
 		}
+	}
+	
+	static function getCounter(type:Type) {
+		if(!counters.exists(type)) counters.set(type, counter++);
+		return counters.get(type);
 	}
 }
 
