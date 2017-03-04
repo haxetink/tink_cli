@@ -202,12 +202,12 @@ class Macro {
 			}
 			
 			for(field in cls.fields.get()) if(field.isPublic) {
-				function addCommand(names:Array<String>, isDefault:Bool, isSub:Bool) {
+				function addCommand(names:Array<String>, isDefault:Bool, isSub:Bool, skipFlags:SkipFlags) {
 					for(command in info.commands) {
 						for(n in names) if(command.names.indexOf(n) != -1)
 							field.pos.makeFailure('Duplicate command: $n').sure();
 					}
-					info.commands.push({names: names, isDefault: isDefault, isSub: isSub, field: field});
+					info.commands.push({names: names, isDefault: isDefault, isSub: isSub, skipFlags: skipFlags, field: field});
 				}
 				
 				function addFlag(names:Array<String>, aliases:Array<Int>, isRequired:Bool) {
@@ -233,6 +233,8 @@ class Macro {
 					}
 				}
 				
+				// process commands
+				
 				var commands = [];
 				var isDefault = false;
 				
@@ -248,13 +250,27 @@ class Macro {
 					case [{params: params}]:
 						for(p in params) commands.push(p.getString().sure());
 					case v:
-						v[1].pos.makeFailure('Invalid @:command meta');
+						v[1].pos.makeFailure('Multiple @:command meta is not allowed').sure();
+				}
+				
+				var skipFlags = switch field.meta.extract(':skipFlags') {
+					case []:
+						Nil;
+					case [{params: []}]:
+						All;
+					case [{params: params, pos: pos}]:
+						pos.makeFailure('@:skipFlags with arguments is not supported yet').sure();
+						// Some([for(p in params) p.getString().sure()]);
+					case v:
+						v[1].pos.makeFailure('Multiple @:skipFlags meta is not allowed').sure();
 				}
 				
 				if(commands.length > 0 || isDefault) {
-					addCommand(commands, isDefault, field.kind.match(FVar(_)));
+					addCommand(commands, isDefault, field.kind.match(FVar(_)), skipFlags);
 					continue;
 				}
+				
+				// process flags
 				
 				switch field.kind {
 					case FVar(_):
@@ -327,7 +343,10 @@ class Macro {
 				case Success(args): args;
 				case Failure(f): return f;
 			}
-			promptRequired().next(function(_) return $call(args));
+			${switch command.skipFlags {
+				case Nil: macro promptRequired().next(function(_) return $call(args));
+				case All: macro $call(args);
+			}}
 		}
 	}
 	
@@ -453,6 +472,7 @@ typedef Command = {
 	isDefault:Bool,
 	isSub:Bool,
 	field:ClassField,
+	skipFlags:SkipFlags,
 }
 
 typedef Flag = {
@@ -460,4 +480,10 @@ typedef Flag = {
 	aliases:Array<Int>,
 	isRequired:Bool,
 	field:ClassField,
+}
+
+enum SkipFlags {
+	Nil;
+	// Some(v:Array<String>),
+	All;
 }
