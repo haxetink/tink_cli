@@ -7,6 +7,7 @@ import tink.cli.Prompt;
 import tink.cli.Result;
 import tink.cli.DocFormatter;
 
+using tink.CoreApi;
 #if macro
 using tink.MacroApi;
 #end
@@ -22,5 +23,12 @@ class Cli {
 		formatter = formatter.ifNull(macro new tink.cli.doc.DefaultFormatter());
 		var doc = tink.cli.Macro.buildDoc(Context.typeof(target));
 		return macro $formatter.format($doc);
+	}
+	
+	public static function exit(result:Outcome<Noise, Error>) {
+		switch result {
+			case Success(_): Sys.exit(0);
+			case Failure(e): Sys.println(e.message + ', ' + e.data); Sys.exit(e.code);
+		}
 	}
 }
