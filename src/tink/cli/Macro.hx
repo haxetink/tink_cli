@@ -111,8 +111,9 @@ class Macro {
 		}
 		
 		// prompt required flags
-		var promptRequired = info.flags
-			.filter(function(f) return f.isRequired)
+		var requiredFlags = info.flags.filter(function(f) return f.isRequired);
+		requiredFlags.reverse(); // we build the prompt loop inside out
+		var promptRequired = requiredFlags
 			.fold(function(flag, prev) {
 				var display = flag.names[0];
 				var i = 0;
