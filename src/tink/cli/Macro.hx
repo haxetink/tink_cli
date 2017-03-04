@@ -11,24 +11,56 @@ using tink.CoreApi;
 class Macro {
 	
 	static var counter = 0;
+	static var infoCache = new tink.macro.TypeMap<ClassInfo>();
 	static var cache = new tink.macro.TypeMap<Type>();
 	
 	public static function build() {
 		switch Context.getLocalType() {
 			case TInst(_, [type]):
-				if(!cache.exists(type)) {
-					cache.set(type, buildClass(switch type {
-						case TInst(_.get() => cls, _): cls;
-						default: throw 'assert';
-					}));
-				}
+				if(!cache.exists(type)) cache.set(type, buildClass(type));
 				return cache.get(type);
 			default: throw 'assert';
 		}
 	}
 	
-	static function buildClass(cls:ClassType) {
-		var info = preprocess(cls);
+	public static function buildDoc(type:Type) {
+		
+		var info = preprocess(type);
+		
+		var commands = [];
+		var flags = [];
+		
+		function s2e(v:String) return macro $v{v};
+		function f2e(fields) return EObjectDecl(fields).at();
+		
+		for(command in info.commands) {
+			commands.push([
+				{field: 'isDefault', expr: macro $v{command.isDefault}},
+				{field: 'isSub', expr: macro $v{command.isSub}},
+				{field: 'names', expr: macro $a{command.names.map(s2e)}},
+				{field: 'doc', expr: macro $v{command.field.doc}},
+			]);
+		}
+		
+		for(flag in info.flags) {
+			flags.push([
+				{field: 'names', expr: macro $a{flag.names.map(s2e)}},
+				{field: 'aliases', expr: macro $a{flag.aliases.map(String.fromCharCode).map(s2e)}},
+				{field: 'doc', expr: macro $v{flag.field.doc}},
+			]);
+		}
+		
+		return EObjectDecl([
+			{field: 'doc', expr: macro $v{info.cls.doc}},
+			{field: 'commands', expr: macro $a{commands.map(f2e)}},
+			{field: 'flags', expr: macro $a{flags.map(f2e)}},
+		]).at();
+	}
+	
+	static function buildClass(type:Type) {
+		
+		var info = preprocess(type);
+		var cls = info.cls;
 		
 		// commands
 		var cmdCases = [];
@@ -116,134 +148,143 @@ class Macro {
 		return Context.getType('tink.cli.$clsname');
 	}
 	
-	static function preprocess(cls:ClassType):ClassInfo {
-		var info:ClassInfo = {
-			aliasDisabled: switch cls.meta.extract(':alias') {
-				case [{params: [macro false]}]: true;
-				default: false;
-			},
-			flags: [],
-			commands: [],
-		}
+	static function preprocess(type:Type):ClassInfo {
 		
-		for(field in cls.fields.get()) if(field.isPublic) {
+		if(!infoCache.exists(type)) {
 			
-			function addCommand(names:Array<String>, isDefault = false) {
-				for(command in info.commands) {
-					for(n in names) if(command.names.indexOf(n) != -1)
-						field.pos.makeFailure('Duplicate command: $n').sure();
+			var cls = switch type {
+				case TInst(_.get() => cls, _): cls;
+				default: throw 'assert';
+			}
+			
+			var info:ClassInfo = {
+				aliasDisabled: switch cls.meta.extract(':alias') {
+					case [{params: [macro false]}]: true;
+					default: false;
+				},
+				flags: [],
+				commands: [],
+				cls: cls,
+			}
+			
+			for(field in cls.fields.get()) if(field.isPublic) {
+				function addCommand(names:Array<String>, isDefault:Bool, isSub:Bool) {
+					for(command in info.commands) {
+						for(n in names) if(command.names.indexOf(n) != -1)
+							field.pos.makeFailure('Duplicate command: $n').sure();
+					}
+					info.commands.push({names: names, isDefault: isDefault, isSub: isSub, field: field});
 				}
-				info.commands.push({names: names, isDefault: isDefault, field: field});
-			}
-			
-			function addFlag(names:Array<String>, aliases:Array<Int>) {
-				field.meta.remove(':flag');
-				field.meta.remove(':alias');
-				var usedName = null;
-				var usedAlias = null;
-				for(flag in info.flags) {
-					for(n in names) if(flag.names.indexOf(n) != -1) {
-						usedName = n;
-						break;
-					}
-					for(a in aliases) if(flag.aliases.indexOf(a) != -1) {
-						usedAlias = a;
-						break;
-					}
-				}
-				switch [usedName, usedAlias]  {
-					case [null, null]: info.flags.push({names: names, aliases: aliases, field: field});
-					case [null, v]: field.pos.makeFailure('Duplicate flag alias: "-' + String.fromCharCode(v) + '"').sure();
-					case [v, _]: field.pos.makeFailure('Duplicate flag name: $v').sure();
-				}
-			}
-			
-			var commands = [];
-			var isDefault = false;
-			
-			switch field.meta.extract(':defaultCommand') {
-				case [v]: isDefault = true;
-				default:
-			}
-			
-			switch field.meta.extract(':command') {
-				case []: // not command
-				case [{params: []}]:
-					commands.push(field.name);
-				case [{params: params}]:
-					for(p in params) commands.push(p.getString().sure());
-				case v:
-					v[1].pos.makeFailure('Invalid @:command meta');
-			}
-			
-			if(commands.length > 0 || isDefault) {
-				addCommand(commands, isDefault);
-				continue;
-			}
-			
-			switch field.kind {
-				case FVar(_):
-					var flags = [];
-					switch field.meta.extract(':flag') {
-						case []:
-							flags.push('--' + field.name);
-						case [{params: params}]:
-							for(p in params) {
-								var flag = p.getString().sure();
-								switch [flag.charCodeAt(0), flag.charCodeAt(1)] {
-									case ['-'.code, '-'.code]: flags.push(flag);
-									case ['-'.code, _]: flags.push(flag); info.aliasDisabled = true;
-									default: flags.push('--$flag');
-								}
-							}
-						case v:
-							v[1].pos.makeFailure('Only a single @:flag meta is allowed').sure();
-					}
-					
-					var aliases = [];
-					switch field.meta.extract(':alias') {
-						case []:
-							for(flag in flags)
-								for(i in 0...flag.length)
-									switch flag.charCodeAt(i) {
-										case '-'.code: // continue
-										case v:
-											if(aliases.indexOf(v) == -1) aliases.push(v);
-											break;
-									}
-						case [{params: params}]:
-							for(p in params) {
-								switch p.getIdent() {
-									case Success('false'):
-										aliases = [];
-										break;
-									default: 
-										var v = p.getString().sure();
-										if(v.length == 1) aliases.push(v.charCodeAt(0));
-										else p.pos.makeFailure('Alias must be a single letter').sure();
-								}
-							}
-						case v:
-							v[1].pos.makeFailure('Only a single @:alias meta is allowed').sure();
-					}
-					addFlag(flags, aliases);
 				
-				case FMethod(_):
+				function addFlag(names:Array<String>, aliases:Array<Int>) {
+					field.meta.remove(':flag');
+					field.meta.remove(':alias');
+					var usedName = null;
+					var usedAlias = null;
+					for(flag in info.flags) {
+						for(n in names) if(flag.names.indexOf(n) != -1) {
+							usedName = n;
+							break;
+						}
+						for(a in aliases) if(flag.aliases.indexOf(a) != -1) {
+							usedAlias = a;
+							break;
+						}
+					}
+					switch [usedName, usedAlias]  {
+						case [null, null]: info.flags.push({names: names, aliases: aliases, field: field});
+						case [null, v]: field.pos.makeFailure('Duplicate flag alias: "-' + String.fromCharCode(v) + '"').sure();
+						case [v, _]: field.pos.makeFailure('Duplicate flag name: $v').sure();
+					}
+				}
+				
+				var commands = [];
+				var isDefault = false;
+				
+				switch field.meta.extract(':defaultCommand') {
+					case [v]: isDefault = true;
+					default:
+				}
+				
+				switch field.meta.extract(':command') {
+					case []: // not command
+					case [{params: []}]:
+						commands.push(field.name);
+					case [{params: params}]:
+						for(p in params) commands.push(p.getString().sure());
+					case v:
+						v[1].pos.makeFailure('Invalid @:command meta');
+				}
+				
+				if(commands.length > 0 || isDefault) {
+					addCommand(commands, isDefault, field.kind.match(FVar(_)));
+					continue;
+				}
+				
+				switch field.kind {
+					case FVar(_):
+						var flags = [];
+						switch field.meta.extract(':flag') {
+							case []:
+								flags.push('--' + field.name);
+							case [{params: params}]:
+								for(p in params) {
+									var flag = p.getString().sure();
+									switch [flag.charCodeAt(0), flag.charCodeAt(1)] {
+										case ['-'.code, '-'.code]: flags.push(flag);
+										case ['-'.code, _]: flags.push(flag); info.aliasDisabled = true;
+										default: flags.push('--$flag');
+									}
+								}
+							case v:
+								v[1].pos.makeFailure('Only a single @:flag meta is allowed').sure();
+						}
+						
+						var aliases = [];
+						switch field.meta.extract(':alias') {
+							case []:
+								for(flag in flags)
+									for(i in 0...flag.length)
+										switch flag.charCodeAt(i) {
+											case '-'.code: // continue
+											case v:
+												if(aliases.indexOf(v) == -1) aliases.push(v);
+												break;
+										}
+							case [{params: params}]:
+								for(p in params) {
+									switch p.getIdent() {
+										case Success('false'):
+											aliases = [];
+											break;
+										default: 
+											var v = p.getString().sure();
+											if(v.length == 1) aliases.push(v.charCodeAt(0));
+											else p.pos.makeFailure('Alias must be a single letter').sure();
+									}
+								}
+							case v:
+								v[1].pos.makeFailure('Only a single @:alias meta is allowed').sure();
+						}
+						addFlag(flags, aliases);
+					
+					case FMethod(_):
+				}
 			}
+			
+			infoCache.set(type, info);
 		}
 		
-		return info;
+		return infoCache.get(type);
 	}
 	
 	static function buildCommandCall(command:Command) {
 		var args = command.isDefault ? macro args : macro args.slice(1);
-		args = switch command.field.kind {
-			case FVar(_): args;
-			case FMethod(_): 
-				macro switch processArgs($args) {
-					case Success(args): args;
-					case Failure(f): return tink.core.Outcome.Failure(f);
-				}
+		if(!command.isSub) {
+			args = macro switch processArgs($args) {
+				case Success(args): args;
+				case Failure(f): return tink.core.Outcome.Failure(f);
+			}
 		}
 		return macro $i{'run_' + command.field.name}($args);
 	}
@@ -267,94 +308,93 @@ class Macro {
 	static function buildCommandForwardCall(command:Command) {
 		var name = command.field.name;
 		var pos = command.field.pos;
-		return switch command.field.kind {
-			case FVar(_):
-				macro return tink.Cli.process(args, command.$name);
-			case FMethod(_):
-				function process(type:Type) {
-					return switch type {
-						case TLazy(f): process(f());
-						case TFun(args, ret):
-							var expr = switch args {
-								case []:
-									macro command.$name();
-								default:
-									var requiredParams = args.length;
-									var restLocation = -1;
-									var promptLocation = -1;
+		return if(command.isSub) {
+			macro return tink.Cli.process(args, command.$name);
+		} else {
+			function process(type:Type) {
+				return switch type {
+					case TLazy(f): process(f());
+					case TFun(args, ret):
+						var expr = switch args {
+							case []:
+								macro command.$name();
+							default:
+								var requiredParams = args.length;
+								var restLocation = -1;
+								var promptLocation = -1;
+								
+								for(i in 0...args.length) {
+									var arg = args[i];
+									switch arg.t.reduce() {
+										case TAbstract(_.get() => {pack: ['tink', 'cli'], name: 'Rest'}, _):
+											if(restLocation != -1) command.field.pos.makeFailure('A command can only accept at most one Rest<T> argument').sure();
+											requiredParams--;
+											restLocation = i;
+											
+										case _.getID() => 'tink.cli.Prompt':
+											if(promptLocation != -1)  command.field.pos.makeFailure('A command can only accept at most one "prompt" argument').sure();
+											requiredParams--;
+											promptLocation = i;
 									
-									for(i in 0...args.length) {
-										var arg = args[i];
-										switch arg.t.reduce() {
-											case TAbstract(_.get() => {pack: ['tink', 'cli'], name: 'Rest'}, _):
-												if(restLocation != -1) command.field.pos.makeFailure('A command can only accept at most one Rest<T> argument').sure();
-												requiredParams--;
-												restLocation = i;
-												
-											case _.getID() => 'tink.cli.Prompt':
-												if(promptLocation != -1)  command.field.pos.makeFailure('A command can only accept at most one "prompt" argument').sure();
-												requiredParams--;
-												promptLocation = i;
-										
-											default:
-												
-										}
+										default:
+											
 									}
+								}
+								
+								
+								var cargs = [];
+								var cargsNum = args.length;
+								if(promptLocation != -1) cargsNum--;
+								
+								var expr = macro @:pos(pos) if(args.length < $v{requiredParams}) return tink.core.Outcome.Failure(new tink.core.Error('Insufficient arguments. Expected: ' + $v{requiredParams} + ', Got: ' + args.length));
+								
+								if(restLocation == -1) {
 									
+									for(i in 0...cargsNum) cargs.push(macro @:pos(pos) args[$v{i}]);
 									
-									var cargs = [];
-									var cargsNum = args.length;
-									if(promptLocation != -1) cargsNum--;
+								} else {
 									
-									var expr = macro @:pos(pos) if(args.length < $v{requiredParams}) return tink.core.Outcome.Failure(new tink.core.Error('Insufficient arguments. Expected: ' + $v{requiredParams} + ', Got: ' + args.length));
+									for(i in 0...restLocation) cargs.push(macro @:pos(pos) args[$v{i}]);
 									
-									if(restLocation == -1) {
-										
-										for(i in 0...cargsNum) cargs.push(macro @:pos(pos) args[$v{i}]);
-										
-									} else {
-										
-										for(i in 0...restLocation) cargs.push(macro @:pos(pos) args[$v{i}]);
-										
-										var remaining = cargsNum - restLocation - 1;
-										cargs.push(macro @:pos(pos) args.slice($v{restLocation}, args.length - $v{remaining}));
-										
-										for(i in 0...remaining) cargs.push(macro @:pos(pos) args[args.length - $v{remaining - i}]);
-										
-									}
+									var remaining = cargsNum - restLocation - 1;
+									cargs.push(macro @:pos(pos) args.slice($v{restLocation}, args.length - $v{remaining}));
 									
-									if(promptLocation != -1) cargs.insert(promptLocation, macro prompt);
+									for(i in 0...remaining) cargs.push(macro @:pos(pos) args[args.length - $v{remaining - i}]);
 									
-									expr = expr.concat(macro command.$name($a{cargs}));
-							}
-							
-							var ret = switch ret.reduce() {
-								case TAbstract(_.get() => {pack: ['tink', 'core'], name: 'Promise'}, [t])
-								| TAbstract(_.get() => {pack: ['tink', 'core'], name: 'Future'}, [TEnum(_.get() => {pack: ['tink', 'core'], name: 'Outcome'}, [t, _])])
-								| TEnum(_.get() => {pack: ['tink', 'core'], name: 'Outcome'}, [t, _])
-								| TAbstract(_.get() => {pack: ['tink', 'core'], name: 'Future'}, [t]): t;
-								case t: t;
-							}
-							
-							switch ret {
-								case v if(v.getID() == 'Void'):
-									expr = expr.concat(macro tink.core.Noise.Noise.Noise);
-								case v if(v.getID() == 'tink.core.Noise'):
-									 // ok
-								case TAnonymous(_): 
-									var ct = ret.toComplex();
-									expr = macro ($expr:tink.core.Promise<$ct>);
-								case _.getID() => id:
-									var ct = id == null ? macro:tink.core.Noise : ret.toComplex();
-									expr = macro ($expr:tink.core.Promise<$ct>);
-							}
-							
-							macro return $expr;
-							
-						default: throw 'assert';
-					}
+								}
+								
+								if(promptLocation != -1) cargs.insert(promptLocation, macro prompt);
+								
+								expr = expr.concat(macro command.$name($a{cargs}));
+						}
+						
+						var ret = switch ret.reduce() {
+							case TAbstract(_.get() => {pack: ['tink', 'core'], name: 'Promise'}, [t])
+							| TAbstract(_.get() => {pack: ['tink', 'core'], name: 'Future'}, [TEnum(_.get() => {pack: ['tink', 'core'], name: 'Outcome'}, [t, _])])
+							| TEnum(_.get() => {pack: ['tink', 'core'], name: 'Outcome'}, [t, _])
+							| TAbstract(_.get() => {pack: ['tink', 'core'], name: 'Future'}, [t]): t;
+							case t: t;
+						}
+						
+						switch ret {
+							case v if(v.getID() == 'Void'):
+								expr = expr.concat(macro tink.core.Noise.Noise.Noise);
+							case v if(v.getID() == 'tink.core.Noise'):
+									// ok
+							case TAnonymous(_): 
+								var ct = ret.toComplex();
+								expr = macro ($expr:tink.core.Promise<$ct>);
+							case _.getID() => id:
+								var ct = id == null ? macro:tink.core.Noise : ret.toComplex();
+								expr = macro ($expr:tink.core.Promise<$ct>);
+						}
+						
+						macro return $expr;
+						
+					default: throw 'assert';
 				}
-				process(command.field.type);
+			}
+			process(command.field.type);
 		}
 	}
 }
@@ -363,11 +403,13 @@ typedef ClassInfo = {
 	commands:Array<Command>,
 	flags:Array<Flag>,
 	aliasDisabled:Bool,
+	cls:ClassType,
 }
 
 typedef Command = {
 	names:Array<String>,
 	isDefault:Bool,
+	isSub:Bool,
 	field:ClassField,
 }
 

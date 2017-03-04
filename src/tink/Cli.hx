@@ -5,6 +5,7 @@ import haxe.macro.Context;
 
 import tink.cli.Prompt;
 import tink.cli.Result;
+import tink.cli.DocFormatter;
 
 #if macro
 using tink.MacroApi;
@@ -15,5 +16,11 @@ class Cli {
 		var ct = Context.toComplexType(Context.typeof(target));
 		prompt = prompt.ifNull(macro new tink.cli.prompt.SimplePrompt());
 		return macro new tink.cli.macro.Router<$ct>($target, $prompt).process($args);
+	}
+	
+	public static macro function getDoc<Target:{}, T>(target:ExprOf<Target>, ?formatter:ExprOf<DocFormatter<T>>):ExprOf<T> {
+		formatter = formatter.ifNull(macro new tink.cli.doc.DefaultFormatter());
+		var doc = tink.cli.Macro.buildDoc(Context.typeof(target));
+		return macro $formatter.format($doc);
 	}
 }

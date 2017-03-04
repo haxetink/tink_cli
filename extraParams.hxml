@@ -1,0 +1,2 @@
+# Make sure docs are generated
+-D use-rtti-doc
