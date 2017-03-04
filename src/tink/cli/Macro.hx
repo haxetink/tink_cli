@@ -111,30 +111,34 @@ class Macro {
 		}
 		
 		// prompt required flags
-		var nextPrompt = macro cb(tink.core.Outcome.Success(tink.core.Noise.Noise.Noise));
-		for(flag in info.flags.filter(function(f) return f.isRequired)) {
-			var display = flag.names[0];
-			var i = 0;
-			while(display.charCodeAt(i) == '-'.code) i++;
-			display = display.substr(i);
-			var name = flag.field.name;
-			var access = macro command.$name;
-			nextPrompt = macro {
-				var next =
-					if($access == null)
-						prompt.prompt($v{display})
-							.next(function(v) {
-								$access = v;
-								return tink.core.Noise.Noise.Noise;
-							});
-					else
-						tink.core.Future.sync(tink.core.Outcome.Success(tink.core.Noise.Noise.Noise));
-				next.handle(function(o) switch o {
-					case Success(_): $nextPrompt;
-					case Failure(_): cb(o);
-				});
-			}
-		}
+		var promptRequired = info.flags
+			.filter(function(f) return f.isRequired)
+			.fold(function(flag, prev) {
+				var display = flag.names[0];
+				var i = 0;
+				while(display.charCodeAt(i) == '-'.code) i++;
+				display = display.substr(i);
+				
+				var name = flag.field.name;
+				var access = macro command.$name;
+				
+				return macro {
+					var next =
+						if($access == null)
+							prompt.prompt($v{display})
+								.next(function(v) {
+									$access = v;
+									return tink.core.Noise.Noise.Noise;
+								});
+						else
+							tink.core.Future.sync(tink.core.Outcome.Success(tink.core.Noise.Noise.Noise));
+							
+					next.handle(function(o) switch o {
+						case Success(_): $prev;
+						case Failure(_): cb(o);
+					});
+				}
+			}, macro cb(tink.core.Outcome.Success(tink.core.Noise.Noise.Noise)));
 		
 		// build the type
 		var path = cls.module.split('.');
@@ -163,7 +167,7 @@ class Macro {
 			}
 			
 			override function promptRequired():tink.core.Promise<tink.core.Noise> {
-				return tink.core.Future.async(function(cb) $nextPrompt);
+				return tink.core.Future.async(function(cb) $promptRequired);
 			}
 			
 		}
