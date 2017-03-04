@@ -10,8 +10,8 @@
 		"kevinresol",
 		"back2dos"
 	],
-	"releasenote": "Fix bug about flags being parsed too early for sub-commands",
-	"version": "0.1.1",
+	"releasenote": "Generate docs",
+	"version": "0.2.0",
 	"url": "https://github.com/haxetink/tink_cli/",
 	"dependencies": {
 		"tink_io": "",
