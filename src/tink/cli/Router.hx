@@ -53,4 +53,8 @@ class Router<T> {
 	function processAlias(args:Array<String>, index:Int) {
 		return -1;
 	}
+	
+	function promptRequired():Promise<Noise> {
+		return Noise;
+	}
 }

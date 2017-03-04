@@ -66,7 +66,8 @@ class DefaultFormatter implements DocFormatter<String> {
 	var re = ~/^\s*\*?\s{0,2}(.*)$/;
 	
 	function formatDoc(doc:String, indent = 2, ?def = '<no doc yet>') {
-		if(doc == null) return def;
+		var indent = StringTools.lpad('', ' ', indent);
+		if(doc == null) return indent + def;
 		var lines = doc.split('\n').map(StringTools.trim);
 		
 		// remove empty lines at the beginning and end
@@ -75,7 +76,7 @@ class DefaultFormatter implements DocFormatter<String> {
 		
 		return lines
 			.map(function(line) return if(re.match(line)) re.matched(1) else line) // trim off leading asterisks
-			.map(function(line) return StringTools.lpad('', ' ', indent) + '$line')
+			.map(function(line) return indent + line)
 			.join('\n');
 	}
 	

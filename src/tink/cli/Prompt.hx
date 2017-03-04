@@ -1,9 +1,10 @@
 package tink.cli;
 
+import tink.Stringly;
 using tink.CoreApi;
 
 interface Prompt {
-	function prompt(type:PromptType):Promise<String>;
+	function prompt(type:PromptType):Promise<Stringly>;
 }
 
 abstract PromptType(PromptTypeBase) from PromptTypeBase to PromptTypeBase {

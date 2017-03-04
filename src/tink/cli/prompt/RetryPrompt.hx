@@ -1,5 +1,6 @@
 package tink.cli.prompt;
 
+import tink.Stringly;
 import tink.cli.Prompt;
 
 using tink.CoreApi;
@@ -13,7 +14,7 @@ class RetryPrompt implements Prompt {
 		this.proxy = proxy == null ? new SimplePrompt() : proxy;
 	}
 	
-	public function prompt(type:PromptType):Promise<String> {
+	public function prompt(type:PromptType):Promise<Stringly> {
 		return switch type {
 			case Simple(_):
 				proxy.prompt(type);

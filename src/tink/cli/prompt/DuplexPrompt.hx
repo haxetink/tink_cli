@@ -1,6 +1,7 @@
 package tink.cli.prompt;
 
 import haxe.io.Bytes;
+import tink.Stringly;
 import tink.io.Sink;
 import tink.io.Source;
 import tink.io.Duplex;
@@ -16,7 +17,7 @@ class DuplexPrompt implements Prompt {
 		this.duplex = duplex;
 	}
 	
-	public function prompt(type:PromptType):Promise<String> {
+	public function prompt(type:PromptType):Promise<Stringly> {
 		
 		var display = switch type {
 			case Simple(v): '$v: ';

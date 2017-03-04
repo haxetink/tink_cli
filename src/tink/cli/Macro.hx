@@ -110,6 +110,32 @@ class Macro {
 			});
 		}
 		
+		// prompt required flags
+		var nextPrompt = macro cb(tink.core.Outcome.Success(tink.core.Noise.Noise.Noise));
+		for(flag in info.flags.filter(function(f) return f.isRequired)) {
+			var display = flag.names[0];
+			var i = 0;
+			while(display.charCodeAt(i) == '-'.code) i++;
+			display = display.substr(i);
+			var name = flag.field.name;
+			var access = macro command.$name;
+			nextPrompt = macro {
+				var next =
+					if($access == null)
+						prompt.prompt($v{display})
+							.next(function(v) {
+								$access = v;
+								return tink.core.Noise.Noise.Noise;
+							});
+					else
+						tink.core.Future.sync(tink.core.Outcome.Success(tink.core.Noise.Noise.Noise));
+				next.handle(function(o) switch o {
+					case Success(_): $nextPrompt;
+					case Failure(_): cb(o);
+				});
+			}
+		}
+		
 		// build the type
 		var path = cls.module.split('.');
 		if(path[path.length - 1] != cls.name) path.push(cls.name);
@@ -117,8 +143,8 @@ class Macro {
 		var clsname = 'Router' + counter++;
 		var def = macro class $clsname extends tink.cli.Router<$ct> {
 			
-			override function process(args:Array<String>):tink.cli.Result return {
-				${ESwitch(macro args[0], cmdCases, buildCommandCall(defCommand)).at()}
+			override function process(args:Array<String>):tink.cli.Result {
+				return ${ESwitch(macro args[0], cmdCases, buildCommandCall(defCommand)).at()}
 			}
 			
 			override function processFlag(args:Array<String>, index:Int) {
@@ -134,6 +160,10 @@ class Macro {
 					${ESwitch(macro str.charCodeAt(i), aliasCases, macro throw "Invalid alias '-" + str.charAt(i) + "'").at()}
 					
 				return current - index;
+			}
+			
+			override function promptRequired():tink.core.Promise<tink.core.Noise> {
+				return tink.core.Future.async(function(cb) $nextPrompt);
 			}
 			
 		}
@@ -176,7 +206,7 @@ class Macro {
 					info.commands.push({names: names, isDefault: isDefault, isSub: isSub, field: field});
 				}
 				
-				function addFlag(names:Array<String>, aliases:Array<Int>) {
+				function addFlag(names:Array<String>, aliases:Array<Int>, isRequired:Bool) {
 					field.meta.remove(':flag');
 					field.meta.remove(':alias');
 					var usedName = null;
@@ -193,7 +223,7 @@ class Macro {
 						}
 					}
 					switch [usedName, usedAlias]  {
-						case [null, null]: info.flags.push({names: names, aliases: aliases, field: field});
+						case [null, null]: info.flags.push({names: names, aliases: aliases, isRequired: isRequired, field: field});
 						case [null, v]: field.pos.makeFailure('Duplicate flag alias: "-' + String.fromCharCode(v) + '"').sure();
 						case [v, _]: field.pos.makeFailure('Duplicate flag name: $v').sure();
 					}
@@ -267,7 +297,10 @@ class Macro {
 							case v:
 								v[1].pos.makeFailure('Only a single @:alias meta is allowed').sure();
 						}
-						addFlag(flags, aliases);
+						
+						var isRequired = field.meta.has(':required');
+						
+						addFlag(flags, aliases, isRequired);
 					
 					case FMethod(_):
 				}
@@ -280,14 +313,18 @@ class Macro {
 	}
 	
 	static function buildCommandCall(command:Command) {
+		var call = macro $i{'run_' + command.field.name};
+		if(command.isSub) return macro $call(args.slice(1));
+		
 		var args = command.isDefault ? macro args : macro args.slice(1);
-		if(!command.isSub) {
-			args = macro switch processArgs($args) {
+		
+		return macro {
+			var args = switch processArgs($args) {
 				case Success(args): args;
-				case Failure(f): return tink.core.Outcome.Failure(f);
+				case Failure(f): return f;
 			}
+			promptRequired().next(function(_) return $call(args));
 		}
-		return macro $i{'run_' + command.field.name}($args);
 	}
 	
 	static function buildCommandField(command:Command):Field {
@@ -417,5 +454,6 @@ typedef Command = {
 typedef Flag = {
 	names:Array<String>,
 	aliases:Array<Int>,
+	isRequired:Bool,
 	field:ClassField,
 }
