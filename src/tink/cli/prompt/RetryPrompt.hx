@@ -8,9 +8,9 @@ class RetryPrompt implements Prompt {
 	var trials:Int;
 	var proxy:Prompt;
 	
-	public function new(trials, proxy) {
+	public function new(trials, ?proxy:Prompt) {
 		this.trials = trials;
-		this.proxy = proxy;
+		this.proxy = proxy == null ? new SimplePrompt() : proxy;
 	}
 	
 	public function prompt(type:PromptType):Promise<String> {
