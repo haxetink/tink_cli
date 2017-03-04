@@ -186,7 +186,8 @@ class Macro {
 							usedName = n;
 							break;
 						}
-						for(a in aliases) if(flag.aliases.indexOf(a) != -1) {
+						
+						if(!info.aliasDisabled) for(a in aliases) if(flag.aliases.indexOf(a) != -1) {
 							usedAlias = a;
 							break;
 						}
