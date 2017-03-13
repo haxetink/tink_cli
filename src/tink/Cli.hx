@@ -28,7 +28,10 @@ class Cli {
 	public static function exit(result:Outcome<Noise, Error>) {
 		switch result {
 			case Success(_): Sys.exit(0);
-			case Failure(e): Sys.println(e.message + ', ' + e.data); Sys.exit(e.code);
+			case Failure(e):
+				var message = e.message;
+				if(e.data != null) message += ', ${e.data}';
+				Sys.println(message); Sys.exit(e.code);
 		}
 	}
 }
