@@ -15,8 +15,8 @@ class StdioPrompt implements Prompt {
 	var secure:Prompt;
 	
 	public function new() {
-		normal = new DuplexPrompt(new StdDuplex());
-		secure = new DuplexPrompt(new SecureStdDuplex());
+		normal = new DuplexPrompt(new Stdio());
+		secure = new DuplexPrompt(new SecureStdio());
 	}
 	
 	
@@ -36,7 +36,7 @@ class StdioPrompt implements Prompt {
 	}
 }
 
-class StdDuplex implements Duplex {
+class Stdio implements Duplex {
 	public var source(get, never):Source;
 	public var sink(get, never):Sink;
 	
@@ -50,7 +50,7 @@ class StdDuplex implements Duplex {
 	inline function get_sink() return Sink.stdout;
 }
 
-class SecureStdDuplex implements Duplex {
+class SecureStdio implements Duplex {
 	public var source(get, never):Source;
 	public var sink(get, never):Sink;
 	
@@ -70,7 +70,7 @@ class SecureStdDuplex implements Duplex {
 					// TODO: do something
 			});
 		}
-		next();
+		next(); // TODO: this will block in sync enviroments
 	}
 	
 	public function close() {
