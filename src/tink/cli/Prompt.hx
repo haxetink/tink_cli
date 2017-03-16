@@ -4,6 +4,8 @@ import tink.Stringly;
 using tink.CoreApi;
 
 interface Prompt {
+	function print(v:String):Promise<Noise>;
+	function println(v:String):Promise<Noise>;
 	function prompt(type:PromptType):Promise<Stringly>;
 }
 

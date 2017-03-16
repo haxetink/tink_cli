@@ -14,6 +14,14 @@ class RetryPrompt implements Prompt {
 		this.proxy = proxy == null ? new SimplePrompt() : proxy;
 	}
 	
+	public function print(v:String):Promise<Noise> {
+		return proxy.print(v);
+	}
+	
+	public function println(v:String):Promise<Noise> {
+		return proxy.println(v);
+	}
+	
 	public function prompt(type:PromptType):Promise<Stringly> {
 		return switch type {
 			case Simple(_):

@@ -4,6 +4,7 @@ import haxe.io.Bytes;
 import tink.Stringly;
 import tink.io.Sink;
 import tink.io.Source;
+import tink.io.IdealSource;
 import tink.io.Duplex;
 import tink.cli.Prompt;
 
@@ -17,6 +18,17 @@ class DuplexPrompt implements Prompt {
 		this.duplex = duplex;
 	}
 	
+	public function print(v:String):Promise<Noise> {
+		return (v:IdealSource).pipeTo(duplex.sink).map(function(r) return switch r {
+			case AllWritten: Success(Noise);
+			default: Failure(Error.withData('Pipe Error', r));
+		});
+	}
+	
+	public function println(v:String):Promise<Noise> {
+		return print('$v\n');
+	}
+	
 	public function prompt(type:PromptType):Promise<Stringly> {
 		
 		var display = switch type {
@@ -24,7 +36,7 @@ class DuplexPrompt implements Prompt {
 			case MultipleChoices(v, c): '$v [${c.join('/')}]: ';
 		}
 		
-		return (display:Source).pipeTo(duplex.sink) >>
+		return (display:IdealSource).pipeTo(duplex.sink) >>
 			function(_) return duplex.source.split(Bytes.ofString('\n')).a.all() >>
 			function(bytes:Bytes) {
 				var s = bytes.toString();
