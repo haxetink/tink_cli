@@ -32,7 +32,7 @@ class DuplexPrompt implements Prompt {
 	public function prompt(type:PromptType):Promise<Stringly> {
 		
 		var display = switch type {
-			case Simple(v): '$v: ';
+			case Simple(v) | Password(v): '$v: ';
 			case MultipleChoices(v, c): '$v [${c.join('/')}]: ';
 		}
 		
