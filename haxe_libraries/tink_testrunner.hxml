@@ -1,0 +1,7 @@
+# @install: lix --silent download haxelib:tink_testrunner#0.5.5 into tink_testrunner/0.5.5/haxelib
+-D tink_testrunner=0.5.5
+-cp /Users/kevin/Codes/tink_testrunner/src
+
+-lib ansi
+-lib tink_macro
+-lib tink_streams

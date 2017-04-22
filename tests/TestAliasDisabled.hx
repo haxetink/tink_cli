@@ -7,6 +7,7 @@ import haxe.ds.StringMap;
 
 using tink.CoreApi;
 
+@:asserts
 class TestAliasDisabled {
 	public function new() {}
 	
@@ -14,14 +15,22 @@ class TestAliasDisabled {
 	public function testSingleDash() {
 		var command = new AliasCommand();
 		return Cli.process(['-path', 'mypath', 'myarg'], command)
-			.map(function(code) return equals('mypath', command.path) && equals('run myarg', command.result()));
+			.map(function(code) {
+				asserts.assert('mypath' == command.path);
+				asserts.assert('run myarg' == command.result());
+				return asserts.done();
+			});
 	}
 	
 	@:describe('Alias Disabled')
 	public function testAliasDisabled() {
 		return Cli.process(['-p', 'mypath', 'myarg'], new AliasCommand())
 			.and(Cli.process(['-n', 'myname', 'myarg'], new AliasCommand()))
-			.map(function(result) return isFalse(result.a.isSuccess()) && isFalse(result.b.isSuccess()));
+			.map(function(result) {
+				asserts.assert(!result.a.isSuccess());
+				asserts.assert(!result.b.isSuccess());
+				return asserts.done();
+			});
 	}
 	
 }
