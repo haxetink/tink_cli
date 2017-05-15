@@ -1,6 +1,9 @@
 -cp tests
-
 -main Playground
--js bin/node/playground.js
--lib hxnodejs
+
+-neko bin/neko/playround.n
+# -js bin/node/playground.js
+# -lib hxnodejs
+
+
 -lib tink_cli

@@ -2,7 +2,6 @@ package;
 
 import tink.Cli;
 import tink.cli.Prompt;
-import tink.cli.prompt.NodePrompt;
 
 using tink.CoreApi;
 
