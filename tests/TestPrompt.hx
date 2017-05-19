@@ -34,7 +34,7 @@ class PromptCommand extends DebugCommand {
 	}
 }
 
-class FakePrompt extends IoPrompt<Noise, Noise> {
+class FakePrompt extends IoPrompt {
 	public function new(src) {
 		super(src, Sink.BLACKHOLE);
 	}
