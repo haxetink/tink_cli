@@ -1,29 +1,20 @@
 sudo: required
 dist: trusty
 
-language: haxe
+language: node_js
+node_js: 6
 
 os:
   - linux
   - osx
-  
-haxe:
-  - "3.4.0"
-  - development
-  
-matrix:
-  allow_failures:
-    - haxe: development
-    
+      
 install:
-  - haxelib git tink_unittest https://github.com/kevinresol/tink_unittest
-  - haxelib install travix
-  - haxelib run travix install
+  - npm install
 
 script:
-  - haxelib run travix node -lib tink_unittest
-  - haxelib run travix cs -lib tink_unittest
-  - haxelib run travix java -lib tink_unittest
-  - haxelib run travix python -lib tink_unittest
-  - haxelib run travix php -lib tink_unittest
-  - haxelib run travix cpp -lib tink_unittest
+  - npm run --silent travix node
+  - npm run --silent travix cs
+  - npm run --silent travix java
+  - npm run --silent travix python
+  - npm run --silent travix php
+  - npm run --silent travix cpp
