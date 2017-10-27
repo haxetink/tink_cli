@@ -19,10 +19,14 @@ class Router<T> {
 		return Error.catchExceptions(function() {
 			var rest = [];
 			var i = 0;
+			var flagsEnded = false;
 			while(i < args.length) {
 				var arg = args[i];
 				
-				if(arg.charCodeAt(0) == '-'.code) { 
+				if(arg == '--') {
+					flagsEnded = true;
+					i++;
+				} else if(!flagsEnded && arg.charCodeAt(0) == '-'.code) { 
 					switch processFlag(args, i) {
 						case -1: // unrecognized flag
 							if(arg.charCodeAt(1) != '-'.code) {
