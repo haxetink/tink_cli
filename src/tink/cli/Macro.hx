@@ -175,6 +175,10 @@ class Macro {
 		var clsname = 'Router' + getCounter(type);
 		var def = macro class $clsname extends tink.cli.Router<$ct> {
 			
+			public function new(command, prompt) {
+				super(command, prompt, $v{info.flags.length > 0});
+			}
+			
 			override function process(args:Array<String>):tink.cli.Result {
 				return ${ESwitch(macro args[0], cmdCases, buildCommandCall(defCommand)).at()}
 			}

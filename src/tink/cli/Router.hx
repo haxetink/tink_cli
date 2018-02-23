@@ -5,10 +5,12 @@ using tink.CoreApi;
 class Router<T> {
 	var command:T;
 	var prompt:Prompt;
+	var hasFlags:Bool;
 	
-	public function new(command, prompt) {
+	public function new(command, prompt, hasFlags) {
 		this.command = command;
 		this.prompt = prompt;
+		this.hasFlags = hasFlags;
 	}
 	
 	public function process(args:Array<String>):Result {
@@ -16,38 +18,42 @@ class Router<T> {
 	}
 	
 	function processArgs(args:Array<String>):Outcome<Array<String>, Error> {
-		return Error.catchExceptions(function() {
-			var rest = [];
-			var i = 0;
-			var flagsEnded = false;
-			while(i < args.length) {
-				var arg = args[i];
-				
-				if(arg == '--') {
-					flagsEnded = true;
-					i++;
-				} else if(!flagsEnded && arg.charCodeAt(0) == '-'.code) { 
-					switch processFlag(args, i) {
-						case -1: // unrecognized flag
-							if(arg.charCodeAt(1) != '-'.code) {
-								switch processAlias(args, i) {
-									case -1: throw 'Unrecognized alias "$arg"';
-									case v: i += v + 1;
-								}
-							} else {
-								throw 'Unrecognized flag "$arg"';
+		return 
+			if(!hasFlags)
+				Success(args);
+			else
+				Error.catchExceptions(function() {
+					var rest = [];
+					var i = 0;
+					var flagsEnded = false;
+					while(i < args.length) {
+						var arg = args[i];
+						
+						if(arg == '--') {
+							flagsEnded = true;
+							i++;
+						} else if(!flagsEnded && arg.charCodeAt(0) == '-'.code) { 
+							switch processFlag(args, i) {
+								case -1: // unrecognized flag
+									if(arg.charCodeAt(1) != '-'.code) {
+										switch processAlias(args, i) {
+											case -1: throw 'Unrecognized alias "$arg"';
+											case v: i += v + 1;
+										}
+									} else {
+										throw 'Unrecognized flag "$arg"';
+									}
+									
+								case v:
+									i += v + 1;
 							}
-							
-						case v:
-							i += v + 1;
+						} else {
+							rest.push(arg);
+							i++;
+						}
 					}
-				} else {
-					rest.push(arg);
-					i++;
-				}
-			}
-			return rest;
-		});
+					return rest;
+				});
 	}
 	
 	function processFlag(args:Array<String>, index:Int) {
