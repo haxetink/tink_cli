@@ -10,8 +10,8 @@
 		"kevinresol",
 		"back2dos"
 	],
-	"releasenote": "Support `--` for terminating arguments",
-	"version": "0.3.0",
+	"releasenote": "Don't attempt to process flags if there are none defined",
+	"version": "0.3.1",
 	"url": "https://github.com/haxetink/tink_cli/",
 	"dependencies": {
 		"tink_io": "",
