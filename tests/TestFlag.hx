@@ -7,175 +7,163 @@ import haxe.ds.StringMap;
 
 using tink.CoreApi;
 
+@:asserts
 class TestFlag {
 	public function new() {}
 	
-	@:describe('Flag')
-	public function testFlag() {
+	@:variant('Flag' (['--name', 'myname', 'myarg'], 'myname', 'run myarg'))
+	@:variant('Alias' (['-n', 'myname', 'myarg'], 'myname', 'run myarg'))
+	@:variant('Argument before Flag' (['myarg', '--name', 'myname'], 'myname', 'run myarg'))
+	@:variant('Argument before Alias' (['myarg', '-n', 'myname'], 'myname', 'run myarg'))
+	public function flags(args:Array<String>, name:String, result:String) {
 		var command = new FlagCommand();
-		return Cli.process(['--name', 'myname', 'myarg'], command)
-			.map(function(code) return equals('myname', command.name) && equals('run myarg', command.result()));
+		return Cli.process(args, command)
+			.map(function(code) {
+				asserts.assert(name == command.name);
+				asserts.assert(result == command.result());
+				return asserts.done();
+			});
 	}
 	
-	@:describe('Alias')
-	public function testAlias() {
+	@:variant('Renamed' (['--another-name', 'mypath', 'myarg'], 'mypath', 'run myarg'))
+	@:variant('Renamed Alias' (['-a', 'mypath', 'myarg'], 'mypath', 'run myarg'))
+	public function renamed(args:Array<String>, path:String, result:String) {
 		var command = new FlagCommand();
-		return Cli.process(['-n', 'myname', 'myarg'], command)
-			.map(function(code) return equals('myname', command.name) && equals('run myarg', command.result()));
-	}
-	
-	
-	@:describe('Argument before Flag')
-	public function testArgB4Flag() {
-		var command = new FlagCommand();
-		return Cli.process(['myarg', '--name', 'myname'], command)
-			.map(function(code) return equals('myname', command.name) && equals('run myarg', command.result()));
-	}
-	
-	@:describe('Argument before Alias')
-	public function testArgB4Alias() {
-		var command = new FlagCommand();
-		return Cli.process(['myarg', '-n', 'myname'], command)
-			.map(function(code) return equals('myname', command.name) && equals('run myarg', command.result()));
-	}
-	
-	
-	@:describe('Renamed')
-	public function testRenamed() {
-		var command = new FlagCommand();
-		return Cli.process(['--another-name', 'mypath', 'myarg'], command)
-			.map(function(code) return equals('mypath', command.path) && equals('run myarg', command.result()));
-	}
-	
-	@:describe('Renamed Alias')
-	public function testRenamedAlias() {
-		var command = new FlagCommand();
-		return Cli.process(['-a', 'mypath', 'myarg'], command)
-			.map(function(code) return equals('mypath', command.path) && equals('run myarg', command.result()));
+		return Cli.process(args, command)
+			.map(function(code) {
+				asserts.assert(path == command.path);
+				asserts.assert(result == command.result());
+				return asserts.done();
+			});
 	}
 	
 	
 	@:describe('Combined Alias')
-	public function testCombinedAlias() {
-		
-		var result = isTrue(true);
+	@:variant(['-an', 'mypath', 'myname', 'myarg'], 'mypath', 'myname', 'run myarg')
+	@:variant(['-na', 'myname', 'mypath', 'myarg'], 'mypath', 'myname', 'run myarg')
+	public function testCombinedAlias(args, path, name, result) {
 		var command = new FlagCommand();
-		var run1 = Cli.process(['-an', 'mypath', 'myname', 'myarg'], command);
-		run1.handle(function(_)
-			result = result && 
-				equals('mypath', command.path) && 
-				equals('myname', command.name) &&
-				equals('run myarg', command.result())
-		);
-		var command = new FlagCommand();
-		var run2 = Cli.process(['-na', 'myname', 'mypath', 'myarg'], command);
-		run2.handle(function(_)
-			result = result && 
-				equals('mypath', command.path) && 
-				equals('myname', command.name) &&
-				equals('run myarg', command.result())
-		);
-		return Future.ofMany([run1, run2]).map(function(_) return result);
+		return Cli.process(args, command)
+			.map(function(_) {
+				asserts.assert(path == command.path);
+				asserts.assert(name == command.name);
+				asserts.assert(result == command.result());
+				return asserts.done();
+			});
 	}
 	
 	@:describe('Bool Flag')
 	public function testBool() {
 		var command = new FlagCommand();
 		return Cli.process(['--force', 'myarg'], command)
-			.map(function(code) return isTrue(command.force) && equals('run myarg', command.result()));
+			.map(function(code) {
+				asserts.assert(command.force);
+				asserts.assert('run myarg' == command.result());
+				return asserts.done();
+			});
 	}
 	
 	@:describe('Int Flag')
 	public function testInt() {
 		var command = new FlagCommand();
 		return Cli.process(['--int', '123','myarg'], command)
-			.map(function(code) return equals(123, command.int) && equals('run myarg', command.result()));
+			.map(function(code) {
+				asserts.assert(123 == command.int);
+				asserts.assert('run myarg' == command.result());
+				return asserts.done();
+			});
 	}
 	
 	@:describe('Float Flag')
 	public function testFloat() {
 		var command = new FlagCommand();
 		return Cli.process(['--float', '1.23', 'myarg'], command)
-			.map(function(code) return equals(1.23, command.float) && equals('run myarg', command.result()));
+			.map(function(code) {
+				asserts.assert(1.23 == command.float);
+				asserts.assert('run myarg' == command.result());
+				return asserts.done();
+			});
 	}
 	
 	@:describe('Int Array Flag')
 	public function testInts() {
 		var command = new FlagCommand();
 		return Cli.process(['--ints', '123', '--ints', '234', '--ints', '456', 'myarg'], command)
-			.map(function(code) return equals('[123,234,456]', haxe.Json.stringify(command.ints)) && equals('run myarg', command.result()));
+			.map(function(code) {
+				asserts.assert('[123,234,456]' == haxe.Json.stringify(command.ints));
+				asserts.assert('run myarg' == command.result());
+				return asserts.done();
+			});
 	}
 	
 	@:describe('Float Array Flag')
 	public function testFloats() {
 		var command = new FlagCommand();
 		return Cli.process(['--floats', '1.23', '--floats', '2.34', '--floats', '3.45', 'myarg'], command)
-			.map(function(code) return equals('[1.23,2.34,3.45]', haxe.Json.stringify(command.floats)) && equals('run myarg', command.result()));
+			.map(function(code) {
+				asserts.assert('[1.23,2.34,3.45]' == haxe.Json.stringify(command.floats));
+				asserts.assert('run myarg' == command.result());
+				return asserts.done();
+			});
 	}
 	
 	@:describe('String Array Flag')
 	public function testStrings() {
 		var command = new FlagCommand();
 		return Cli.process(['--strings', 'a', '--strings', 'b', '--strings', 'c', 'myarg'], command)
-			.map(function(code) return equals('["a","b","c"]', haxe.Json.stringify(command.strings)) && equals('run myarg', command.result()));
+			.map(function(code) {
+				asserts.assert('["a","b","c"]' == haxe.Json.stringify(command.strings));
+				asserts.assert('run myarg' == command.result());
+				return asserts.done();
+			});
 	}
 	
 	@:describe('Custom Map')
 	public function testCustomMap() {
 		var command = new FlagCommand();
 		return Cli.process(['--map', 'a=1,b=2,c=3', 'myarg'], command)
-			.map(function(code) return equals('a=>1,b=>2,c=>3', command.map.toString()) && equals('run myarg', command.result()));
+			.map(function(code) {
+				asserts.assert('a=>1,b=>2,c=>3' == command.map.toString());
+				asserts.assert('run myarg' == command.result());
+				return asserts.done();
+			});
 	}
 	
 	@:describe('Multiple Flag Names')
-	public function testMultipleFlagNames() {
-		var result = isTrue(true);
-		
-		function run(i) {
-			var command = new FlagCommand();
-			var run1 = Cli.process([i, 'multi', 'myarg'], command);
-			run1.handle(function(_)
-				result = result && 
-					equals('multi', command.multi) && 
-					equals('run myarg', command.result())
-			);
-			return run1;
-		}
-		
-		return Future.ofMany([
-			run('--multi1'),
-			run('--multi2'),
-			run('-m'),
-		]).map(function(_) return result);
+	@:variant('--multi1')
+	@:variant('--multi2')
+	@:variant('-m')
+	public function testMultipleFlagNames(cmd) {
+		var command = new FlagCommand();
+		return Cli.process([cmd, 'multi', 'myarg'], command)
+			.map(function(_) {
+				asserts.assert('multi' == command.multi);
+				asserts.assert('run myarg' == command.result());
+				return asserts.done();
+			});
 	}
 	
 	@:describe('Multiple Aliases')
-	public function testMultipleAliases() {
-		var result = isTrue(true);
-		
-		function run(i) {
-			var command = new FlagCommand();
-			var run1 = Cli.process([i, 'multi', 'myarg'], command);
-			run1.handle(function(_)
-				result = result && 
-					equals('multi', command.multiAlias) && 
-					equals('run myarg', command.result())
-			);
-			return run1;
-		}
-		
-		return Future.ofMany([
-			run('-x'),
-			run('-y'),
-			run('-z'),
-		]).map(function(_) return result);
+	@:variant('-x')
+	@:variant('-y')
+	@:variant('-z')
+	public function testMultipleAliases(flag) {
+		var command = new FlagCommand();
+		return Cli.process([flag, 'multi', 'myarg'], command)
+			.map(function(_) {
+				asserts.assert('multi' == command.multiAlias);
+				asserts.assert('run myarg' == command.result());
+				return asserts.done();
+			});
 	}
+	
+	
 	
 	@:describe('No Alias')
 	public function testNoAlias() {
 		var command = new FlagCommand();
 		return Cli.process(['-w', 'multi', 'myarg'], command)
-			.map(function(result) return isFalse(result.isSuccess()));
+			.map(function(result) return assert(!result.isSuccess()));
 	}
 }
 

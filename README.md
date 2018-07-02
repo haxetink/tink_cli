@@ -1,5 +1,7 @@
 # tink_cli
 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/haxetink/public)
+
 Write command line tools with ~~ease~~ Haxe.
 
 ## Usage

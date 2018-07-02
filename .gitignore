@@ -1,2 +1,4 @@
 bin
 dump
+node_modules
+*.n
