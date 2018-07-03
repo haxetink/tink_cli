@@ -11,7 +11,7 @@ class RetryPrompt implements Prompt {
 	
 	public function new(trials, ?proxy:Prompt) {
 		this.trials = trials;
-		this.proxy = proxy == null ? new SimplePrompt() : proxy;
+		this.proxy = proxy == null ? new DefaultPrompt() : proxy;
 	}
 	
 	public function print(v:String):Promise<Noise> {
@@ -24,7 +24,7 @@ class RetryPrompt implements Prompt {
 	
 	public function prompt(type:PromptType):Promise<Stringly> {
 		return switch type {
-			case Simple(_):
+			case Simple(_) | Secure(_):
 				proxy.prompt(type);
 			case MultipleChoices(v, c):
 				Future.async(function(cb) {

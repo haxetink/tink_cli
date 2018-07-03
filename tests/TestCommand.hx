@@ -6,6 +6,7 @@ import tink.unit.Assert.*;
 
 using tink.CoreApi;
 
+@:asserts
 class TestCommand {
 	public function new() {}
 	
@@ -15,96 +16,90 @@ class TestCommand {
 		var command = new EntryCommand();
 		
 		return Cli.process(['arg', 'other'], command)
-			.map(function(code) return equals('defaultAction arg,other', command.result()));
+			.map(function(code) return assert(command.result() == 'defaultAction arg,other'));
 	}
 	
 	@:describe('Unnamed Command')
 	public function testUnnamed() {
 		var command = new EntryCommand();
 		return Cli.process(['install', 'mypath'], command)
-			.map(function(code) return equals('install mypath', command.result()));
+			.map(function(code) return assert(command.result() == 'install mypath'));
 	}
 	
 	@:describe('Named Command')
 	public function testNamed() {
 		var command = new EntryCommand();
 		return Cli.process(['uninst', 'mypath', '3'], command)
-			.map(function(code) return equals('uninstall mypath 3', command.result()));
+			.map(function(code) return assert(command.result() == 'uninstall mypath 3'));
 	}
 	
 	@:describe('Sub Command')
 	public function testSub() {
 		var command = new EntryCommand();
 		return Cli.process(['init', 'a', 'b', 'c'], command)
-			.map(function(code) return equals('defaultInit a,b,c', command.init.result()));
+			.map(function(code) return assert(command.init.result() == 'defaultInit a,b,c'));
 	}
 	
 	@:describe('Multi Name')
-	public function testMultiName() {
-		function run(cmd:String) {
-			var command = new EntryCommand();
-			return Cli.process([cmd], command).map(function(_) return command);
-		}
-		return run('multi1').and(run('multi2'))
-			.map(function(o) return equals('multi', o.a.result()) && equals('multi', o.b.result()));
+	@:variant('multi1')
+	@:variant('multi2')
+	public function testMultiName(cmd:String) {
+		var command = new EntryCommand();
+		return Cli.process([cmd], command)
+			.map(function(_) return assert(command.result() == 'multi'));
 	}
 	
 	@:describe('Rest Arguments')
-	public function testRest() {
-		function run(cmd:Array<String>) {
-			var command = new EntryCommand();
-			return Cli.process(cmd, command).map(function(_) return command.result());
-		}
-		
-		return Future.ofMany([
-			run(['rest', 'a', 'b']),
-			run(['rest', 'a', 'b', 'c']),
-			run(['rest', 'a', 'b', 'c', 'd']),
-			run(['rest', 'a', 'b', 'c', 'd', 'e']),
-		]).map(function(o) return 
-			equals(null, o[0]) && // failed, not enough args
-			equals('rest a b  c', o[1]) &&
-			equals('rest a b c d', o[2]) &&
-			equals('rest a b c,d e', o[3])
-		);
+	@:variant(['rest', 'a', 'b'], null)
+	@:variant(['rest', 'a', 'b', 'c'], 'rest a b  c')
+	@:variant(['rest', 'a', 'b', 'c', 'd'], 'rest a b c d')
+	@:variant(['rest', 'a', 'b', 'c', 'd', 'e'], 'rest a b c,d e')
+	public function testRest(cmd:Array<String>, result:String) {
+		var command = new EntryCommand();
+		return Cli.process(cmd, command)
+			.map(function(_) return assert(command.result() == result));
 	}
 	
 	@:describe('Const Result')
 	public function testConst() {
 		var command = new EntryCommand();
-		return Cli.process(['const'], command);
+		return Cli.process(['const'], command)
+			.map(function(o) return assert(o.isSuccess()));
 	}
 	
 	@:describe('Success Result')
 	public function testSuccess() {
 		var command = new EntryCommand();
-		return Cli.process(['success'], command);
+		return Cli.process(['success'], command)
+			.map(function(o) return assert(o.isSuccess()));
 	}
 	
 	@:describe('Failure Result')
 	public function testFailure() {
 		var command = new EntryCommand();
 		return Cli.process(['failure'], command)
-			.map(function(result) return isFalse(result.isSuccess()));
+			.map(function(result) return assert(!result.isSuccess()));
 	}
 	
 	@:describe('Future Const Result')
 	public function testFutureConst() {
 		var command = new EntryCommand();
-		return Cli.process(['futureConst'], command);
+		return Cli.process(['futureConst'], command)
+			.map(function(o) return assert(o.isSuccess()));
 	}
 	
 	@:describe('Future Success Result')
 	public function testFutureSuccess() {
 		var command = new EntryCommand();
-		return Cli.process(['futureSuccess'], command);
+		return Cli.process(['futureSuccess'], command)
+			.map(function(o) return assert(o.isSuccess()));
 	}
 	
 	@:describe('Future Failure Result')
 	public function testFutureFailure() {
 		var command = new EntryCommand();
 		return Cli.process(['futureFailure'], command)
-			.map(function(result) return isFalse(result.isSuccess()));
+			.map(function(result) return assert(!result.isSuccess()));
 	}
 	
 }

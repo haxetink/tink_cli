@@ -10,8 +10,8 @@
 		"kevinresol",
 		"back2dos"
 	],
-	"releasenote": "Don't attempt to process flags if there are none defined",
-	"version": "0.3.1",
+	"releasenote": "Generate Docs",
+	"version": "0.2.1",
 	"url": "https://github.com/haxetink/tink_cli/",
 	"dependencies": {
 		"tink_io": "",

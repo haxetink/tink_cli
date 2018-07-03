@@ -18,4 +18,5 @@ abstract PromptType(PromptTypeBase) from PromptTypeBase to PromptTypeBase {
 enum PromptTypeBase {
 	Simple(prompt:String);
 	MultipleChoices(prompt:String, choices:Array<String>);
+	Secure(prompt:String);
 }

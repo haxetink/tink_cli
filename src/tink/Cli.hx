@@ -15,7 +15,7 @@ using tink.MacroApi;
 class Cli {
 	public static macro function process<Target:{}>(args:ExprOf<Array<String>>, target:ExprOf<Target>, ?prompt:ExprOf<Prompt>):ExprOf<Result> {
 		var ct = Context.toComplexType(Context.typeof(target));
-		prompt = prompt.ifNull(macro new tink.cli.prompt.SimplePrompt());
+		prompt = prompt.ifNull(macro new tink.cli.prompt.RetryPrompt(5));
 		return macro new tink.cli.macro.Router<$ct>($target, $prompt).process($args);
 	}
 	
