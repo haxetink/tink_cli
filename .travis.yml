@@ -9,15 +9,15 @@ os:
   - osx
       
 install:
-  - npm install
+  - yarn
 
 script:
-  - npm run --silent travix node
-  # - npm run --silent travix cs # type paramters...
-  # - npm run --silent travix java # type paramters...
-  # - npm run --silent travix python # ???
-  - npm run --silent travix php
-  - npm run --silent travix cpp
-  - npm run --silent travix lua
-  - npm run --silent travix neko
-  - npm run --silent travix interp
+  - yarn travix node
+  # - yarn travix cs # type paramters...
+  # - yarn travix java # type paramters...
+  # - yarn travix python # ???
+  - yarn travix php
+  - yarn travix cpp
+  # - yarn travix lua 
+  - yarn travix neko
+  - yarn travix interp
