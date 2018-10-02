@@ -48,7 +48,7 @@ class DefaultFormatter implements DocFormatter<String> {
 			addLine('    Subcommands:');
 			
 			function addCommand(name:String, doc:String) {
-				if(doc == null) doc = '';
+				if(doc == null) doc = '(doc missing)';
 				addLine(indent(name.lpad(' ', maxCommandLength) + ' : ' + indent(doc, maxCommandLength + 3).trim(), 6));
 			}
 			
