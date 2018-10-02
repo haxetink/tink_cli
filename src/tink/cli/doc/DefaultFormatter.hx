@@ -2,72 +2,102 @@ package tink.cli.doc;
 
 import tink.cli.DocFormatter;
 
+using Lambda;
+using StringTools;
+
 class DefaultFormatter implements DocFormatter<String> {
-	public function new() {}
 	
-	public function format(spec:DocSpec):String {
-		
-		var title = formatDoc(spec.doc, 0, '==============');
-		var defaultCommand = null;
-		var subs = [];
-		var commands = [];
-		var flags = [];
-		
-		for(command in spec.commands) {
-			if(command.isDefault) {
-				defaultCommand = formatDoc(command.doc);
-				continue;
-			}
-			if(command.isSub) {
-				subs.push(formatCommandNames(command.names));
-				continue;
-			}
-			
-			commands.push('  ' + formatCommandNames(command.names) + ':\n' + formatDoc(command.doc, 4));
-		}
-		
-		for(flag in spec.flags) {
-			var buf = new StringBuf();
-			buf.add('  ');
-			buf.add(flag.names.join(', '));
-			if(flag.aliases.length > 0) buf.add(', ' + flag.aliases.map(function(a) return '-$a').join(', '));
-			buf.add(':\n');
-			buf.add(formatDoc(flag.doc, 4));
-			flags.push(buf.toString());
-		}
-		
-		var out = [
-			title + '\n',
-			defaultCommand + '\n',
-		];
-		
-		if(subs.length > 0) {
-			out.push('Sub Commands:');
-			out.push('  ' + subs.join(', '));
-			out.push('\n');
-		}
-		
-		if(commands.length > 0) {
-			out.push('Commands:');
-			out.push(commands.join('\n'));
-			out.push('\n');
-		}
-		
-		if(flags.length > 0) {
-			out.push('Flags:');
-			out.push(flags.join('\n'));
-			out.push('\n');
-		}
-		
-		return '\n' + out.join('\n') + '\n';
+	var root:String;
+	
+	public function new(?root) {
+		this.root = root;
 	}
 	
+	public function format(spec:DocSpec):String {
+		var out = new StringBuf();
+		inline function addLine(v:String) out.add(v + '\n');
+		
+		// title
+		addLine('');
+		switch formatDoc(spec.doc) {
+			case null:
+			case doc: addLine('$doc\n');
+		}
+		
+		var subs = spec.commands.filter(function(c) return !c.isDefault);
+		var flags = [];
+		
+		if(root != null) addLine('  Usage: $root');
+		
+		switch spec.commands.find(function(c) return c.isDefault) {
+			case null:
+			case defaultCommand:
+				switch formatDoc(defaultCommand.doc) {
+					case null:
+					case doc: addLine(indent(doc, 4) + '\n');
+				}
+		}
+		
+		if(subs.length > 0) {
+			var maxCommandLength = subs.fold(function(command, max) {
+				for(name in command.names) if(name.length > max) max = name.length;
+				return max;
+			}, 0);
+			
+			if(root != null) addLine('  Usage: $root <subcommand>');
+			addLine('    Subcommands:');
+			
+			function addCommand(name:String, doc:String) {
+				if(doc == null) doc = '';
+				addLine(indent(name.lpad(' ', maxCommandLength) + ' : ' + indent(doc, maxCommandLength + 3).trim(), 6));
+			}
+			
+			for(command in subs) {
+				var name = command.names[0];
+				addCommand(name, formatDoc(command.doc));
+				
+				if(command.names.length > 1)
+					for(i in 1...command.names.length)
+						addCommand(command.names[i], 'alias of $name');
+			}
+		}
+		
+		if(spec.flags.length > 0) {
+			function nameOf(flag:DocFlag) {
+				var variants = flag.names.join(', ');
+				if(flag.aliases.length > 0) variants += ', ' + flag.aliases.map(function(a) return '-$a').join(', ');
+				return variants;
+			}
+			
+			var maxFlagLength = spec.flags.fold(function(flag, max) {
+				var name = nameOf(flag);
+				if(name.length > max) max = name.length;
+				return max;
+			}, 0);
+			
+			function addFlag(name:String, doc:String) {
+				if(doc == null) doc = '';
+				addLine(indent(name.lpad(' ', maxFlagLength) + ' : ' + indent(doc, maxFlagLength + 3).trim(), 6));
+			}
+			
+			addLine('');
+			addLine('  Flags:');
+			
+			for(flag in spec.flags) {
+				addFlag(nameOf(flag), formatDoc(flag.doc));
+			}
+		}
+		
+		return out.toString();
+	}
+	
+	function indent(v:String, level:Int) {
+		return v.split('\n').map(function(v) return ''.lpad(' ', level) + v).join('\n');
+	}
 	
 	var re = ~/^\s*\*?\s{0,2}(.*)$/;
-	
-	function formatDoc(doc:String, indent = 2, ?def = '<no doc yet>') {
-		var indent = StringTools.lpad('', ' ', indent);
-		if(doc == null) return indent + def;
+	function formatDoc(doc:String) {
+		if(doc == null) return null;
 		var lines = doc.split('\n').map(StringTools.trim);
 		
 		// remove empty lines at the beginning and end
@@ -76,14 +106,6 @@ class DefaultFormatter implements DocFormatter<String> {
 		
 		return lines
 			.map(function(line) return if(re.match(line)) re.matched(1) else line) // trim off leading asterisks
-			.map(function(line) return indent + line)
 			.join('\n');
-	}
-	
-	function formatCommandNames(names:Array<String>) {
-		var out = names[0];
-		if(names.length > 1)
-			out += ' (' + [for(i in 1...names.length) names[i]].join(', ') + ')';
-		return out;
 	}
 }
