@@ -58,7 +58,7 @@ class DefaultFormatter implements DocFormatter<String> {
 				
 				if(command.names.length > 1)
 					for(i in 1...command.names.length)
-						addCommand(command.names[i], 'alias of $name');
+						addCommand(command.names[i], 'Alias of $name');
 			}
 		}
 		
