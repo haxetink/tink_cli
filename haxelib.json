@@ -10,8 +10,8 @@
 		"kevinresol",
 		"back2dos"
 	],
-	"releasenote": "Generate Docs",
-	"version": "0.2.1",
+	"releasenote": "Merged pure branch",
+	"version": "0.4.0",
 	"url": "https://github.com/haxetink/tink_cli/",
 	"dependencies": {
 		"tink_io": "",
