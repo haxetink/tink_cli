@@ -42,6 +42,9 @@ jobs:
     # - stage: test # should uncomment this when there is no matrix above (e.g. only one os, one env, etc)
     - stage: deploy
       os: linux
+      install:
+        - npm i -g lix
+        - lix download
       script: skip
       env:
         secure: ZHfmyegShsvV61rIuLfu9YyhXULmwR7ax7+vhWt57dtStppbetaIFtAz+iJwXDHdReH8Z+1tPIXNrSjz0pEn+dp+3ov+TwJJXP0vPeEOvyoMI3pcNKAT3IP0nGBUf0xoOh/9g9RBTPgS5nH7wVNu33uk7Eh2HW/TfMYVlGxiuvJ74fhsA2UgD9PWIeTnC9LW7AxdAzhXz26a70fHj30bHAG8jKJZcLYSCl7Vb7+BkYx+WUonpt9lXeOz34QQTMlf/k2EVRU5r97Qnv8F9x+qCS/zI/H7qZp2+VrbfdnUbBfHgOgRpiow0sSj9Z3I/NsvO7v5nAnASSnZb4FmFty9iy8AetleUv8q27VUqlolzSQ83SipjjG4VwbB4ZVqfYb2uzWBmB3TZUyHSBvp9JWc4etd5EhaNWvQ4FVkC8kKHECPBfCarA36XS1DHpj+6rVj3iNnQkfKXFCCv1AhP318sSByETZIMEhTU8h3zXY5D5SL7A8nIMDCyPSREnhwt7J0YA/tuCO7/EZ67lDKixWyoGWZs3pj5yyAhiXd1bfJ2Cdv2bYRFA94BjGzIEfVepdJo/Toda8Ort8VadsGJSI8DEOrd2JcdlbRBCiA/+Tu5Jf3knsFo/3ug4rvTK7Vg/lo9YwYpneTjPhLUx6SLpUwBD1wnSoum84rf6wh6B5J7x4=
