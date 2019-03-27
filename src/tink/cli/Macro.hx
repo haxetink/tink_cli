@@ -43,7 +43,7 @@ class Macro {
 					{field: 'isDefault', expr: macro $v{command.isDefault}},
 					{field: 'isSub', expr: macro $v{command.isSub}},
 					{field: 'names', expr: macro $a{command.names.map(s2e)}},
-					{field: 'doc', expr: macro $v{command.field.doc}},
+					{field: 'doc', expr: macro $v{getCommandDoc(command.field)}},
 				]);
 			}
 			
@@ -494,6 +494,14 @@ class Macro {
 	static function getCounter(type:Type) {
 		if(!counters.exists(type)) counters.set(type, counter++);
 		return counters.get(type);
+	}
+	
+	static function getCommandDoc(field:ClassField) {
+		if(field.doc != null) return field.doc;
+		switch(field.type) {
+			case TInst(t, params): return t.get().doc;
+			case _: return null;
+		}
 	}
 }
 
