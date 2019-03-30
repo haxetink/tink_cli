@@ -1,6 +1,6 @@
 -D travix=0.12.2
-# @install: lix --silent download "gh://github.com/kevinresol/travix#ae549386a2a096e82c7249ef5cf88c8b051523ec" into travix/0.12.2/github/ae549386a2a096e82c7249ef5cf88c8b051523ec
-# @post-install: cd ${HAXE_LIBCACHE}/travix/0.12.2/github/ae549386a2a096e82c7249ef5cf88c8b051523ec && haxe -cp src --run travix.PostDownload
-# @run: haxelib run-dir travix ${HAXE_LIBCACHE}/travix/0.12.2/github/ae549386a2a096e82c7249ef5cf88c8b051523ec
+# @install: lix --silent download "gh://github.com/back2dos/travix#d9f15d14098deea42a89334b0473f088e670e7de" into travix/0.12.2/github/d9f15d14098deea42a89334b0473f088e670e7de
+# @post-install: cd ${HAXE_LIBCACHE}/travix/0.12.2/github/d9f15d14098deea42a89334b0473f088e670e7de && haxe -cp src --run travix.PostDownload
+# @run: haxelib run-dir travix ${HAXE_LIBCACHE}/travix/0.12.2/github/d9f15d14098deea42a89334b0473f088e670e7de
 -lib tink_cli
--cp ${HAXE_LIBCACHE}/travix/0.12.2/github/ae549386a2a096e82c7249ef5cf88c8b051523ec/src
+-cp ${HAXE_LIBCACHE}/travix/0.12.2/github/d9f15d14098deea42a89334b0473f088e670e7de/src
