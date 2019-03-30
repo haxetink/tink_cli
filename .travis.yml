@@ -29,10 +29,10 @@ script:
   - lix run travix node
   # - lix run travix cs # type paramters...
   # - lix run travix java # type paramters...
-  # - lix run travix python # ???
+  - lix run travix python
   - lix run travix php
   - lix run travix cpp
-  # - lix run travix lua 
+  - lix run travix lua 
   - lix run travix neko
   - lix run travix interp
 
