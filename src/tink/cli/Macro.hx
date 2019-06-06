@@ -90,7 +90,15 @@ class Macro {
 		var cls = info.cls;
 		
 		// commands
-		var cmdCases = [];
+		var defCommand = info.commands.find(function(c) return c.isDefault);
+		if(defCommand == null) Context.error('Default command not found, tag a function with @:defaultCommand', cls.pos);
+		var defCommandCall = buildCommandCall(defCommand);
+		
+		var cmdCases = [{
+			values: [macro null],
+			guard: null,
+			expr: defCommandCall,
+		}];
 		var fields = [];
 		for(command in info.commands) {
 			if(!command.isDefault) cmdCases.push({
@@ -100,9 +108,6 @@ class Macro {
 			});
 			fields.push(buildCommandField(command));
 		}
-		
-		var defCommand = info.commands.find(function(c) return c.isDefault);
-		if(defCommand == null) Context.error('Default command not found, tag a function with @:defaultCommand', cls.pos);
 		
 		// flags
 		var flagCases = [];
@@ -180,7 +185,7 @@ class Macro {
 			}
 			
 			override function process(args:Array<String>):tink.cli.Result {
-				return ${ESwitch(macro args[0], cmdCases, buildCommandCall(defCommand)).at()}
+				return ${ESwitch(macro args[0], cmdCases, defCommandCall).at()}
 			}
 			
 			override function processFlag(args:Array<String>, index:Int) {
