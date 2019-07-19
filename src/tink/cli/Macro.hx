@@ -118,17 +118,23 @@ class Macro {
 			var pos = flag.field.pos;
 			var access = macro command.$name;
 			
-			var assignment = switch flag.field.type {
-				case _.getID() => 'Bool':
-					macro @:pos(pos) $access = true;
-				case TInst(_.get() => {pack: [], name: 'Array'}, _):
-					macro @:pos(pos) {
-						if($access == null) $access = [];
-						$access.push((args[++current]:tink.Stringly));
-					}
-				default:
-					macro @:pos(pos) $access = (args[++current]:tink.Stringly);
+			function getAssignment(type:Type) {
+				return switch type {
+					case _.getID() => 'Bool':
+						macro @:pos(pos) $access = true;
+					case TInst(_.get() => {pack: [], name: 'Array'}, _):
+						macro @:pos(pos) {
+							if($access == null) $access = [];
+							$access.push((args[++current]:tink.Stringly));
+						}
+					case TLazy(f):
+						getAssignment(f());
+					default:
+						macro @:pos(pos) $access = (args[++current]:tink.Stringly);
+				}
 			}
+				
+			var assignment = getAssignment(flag.field.type);
 			
 			if(flag.names.length > 0) flagCases.push({
 				values: [for(name in flag.names) macro @:pos(pos) $v{name}],
