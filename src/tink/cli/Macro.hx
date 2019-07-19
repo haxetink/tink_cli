@@ -359,7 +359,7 @@ class Macro {
 						}
 						
 						// flag is marked as "required" (will be prompted when missing) if there is no default expr
-						var isRequired = field.expr() == null;
+						var isRequired = field.expr() == null && !field.meta.has(':optional');
 						
 						addFlag(flags, aliases, isRequired);
 					
