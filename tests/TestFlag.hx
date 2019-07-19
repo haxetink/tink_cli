@@ -181,10 +181,10 @@ class FlagCommand extends DebugCommand {
 	public var multiAlias:String = null;
 	
 	@:alias('b')
-	public var force:Bool = null;
+	public var force:Bool = false;
 	
-	public var int:Int = null;
-	public var float:Float = null;
+	public var int:Int = 0;
+	public var float:Float = 0;
 	
 	@:alias('j')
 	public var ints:Array<Int> = null;
