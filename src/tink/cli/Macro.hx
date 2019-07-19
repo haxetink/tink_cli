@@ -90,9 +90,10 @@ class Macro {
 		var cls = info.cls;
 		
 		// commands
-		var defCommand = info.commands.find(function(c) return c.isDefault);
-		if(defCommand == null) Context.error('Default command not found, tag a function with @:defaultCommand', cls.pos);
-		var defCommandCall = buildCommandCall(defCommand);
+		var defCommandCall = switch info.commands.find(function(c) return c.isDefault) {
+			case null: Context.error('Default command not found, tag a function with @:defaultCommand', cls.pos);
+			case cmd: buildCommandCall(cmd);
+		}
 		
 		var cmdCases = [{
 			values: [macro null],
