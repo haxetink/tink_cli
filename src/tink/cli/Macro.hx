@@ -312,6 +312,8 @@ class Macro {
 				switch field.kind {
 					case FVar(_):
 						var flags = [];
+						
+						// determine flag name
 						switch field.meta.extract(':flag') {
 							case []:
 								flags.push('--' + field.name);
@@ -328,6 +330,7 @@ class Macro {
 								v[1].pos.makeFailure('Only a single @:flag meta is allowed').sure();
 						}
 						
+						// determine aliases
 						var aliases = [];
 						switch field.meta.extract(':alias') {
 							case []:
@@ -355,7 +358,8 @@ class Macro {
 								v[1].pos.makeFailure('Only a single @:alias meta is allowed').sure();
 						}
 						
-						var isRequired = field.meta.has(':required');
+						// flag is marked as "required" (will be prompted when missing) if there is no default expr
+						var isRequired = field.expr() == null;
 						
 						addFlag(flags, aliases, isRequired);
 					

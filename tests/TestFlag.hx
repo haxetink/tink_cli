@@ -169,34 +169,34 @@ class TestFlag {
 
 class FlagCommand extends DebugCommand {
 	
-	public var name:String;
+	public var name:String = null;
 	
 	@:flag('another-name')
-	public var path:String;
+	public var path:String = null;
 	
 	@:flag('multi1', 'multi2')
-	public var multi:String;
+	public var multi:String = null;
 	
 	@:alias('x', 'y', 'z')
-	public var multiAlias:String;
+	public var multiAlias:String = null;
 	
 	@:alias('b')
-	public var force:Bool;
+	public var force:Bool = null;
 	
-	public var int:Int;
-	public var float:Float;
+	public var int:Int = null;
+	public var float:Float = null;
 	
 	@:alias('j')
-	public var ints:Array<Int>;
+	public var ints:Array<Int> = null;
 	@:alias('k')
-	public var floats:Array<Float>;
-	public var strings:Array<String>;
+	public var floats:Array<Float> = null;
+	public var strings:Array<String> = null;
 	
 	@:alias('o')
-	public var map:CustomMap;
+	public var map:CustomMap = null;
 
 	@:alias(false)
-	public var withoutalias:String;
+	public var withoutalias:String = null;
 	
 	@:defaultCommand
 	public function run(args:Rest<String>) {

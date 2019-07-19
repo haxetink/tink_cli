@@ -37,10 +37,10 @@ class TestAliasDisabled {
 
 class AliasCommand extends DebugCommand {
 	
-	public var name:String;
+	public var name:String = null;
 	
 	@:flag('-path')
-	public var path:String;
+	public var path:String = null;
 	
 	@:defaultCommand
 	public function run(args:Rest<String>) {
