@@ -23,6 +23,7 @@ class Router<T> {
 				Success(args);
 			else
 				Error.catchExceptions(function() {
+					var args = expandAssignments(args);
 					var rest = [];
 					var i = 0;
 					var flagsEnded = false;
@@ -66,5 +67,18 @@ class Router<T> {
 	
 	function promptRequired():Promise<Noise> {
 		return Noise;
+	}
+	
+	static function expandAssignments(args:Array<String>):Array<String> {
+		var ret = [];
+		for(arg in args)
+			switch [arg.charCodeAt(0), arg.charCodeAt(1), arg.indexOf('=')] {
+				case ['-'.code, '-'.code, i] if(i != -1):
+					ret.push(arg.substr(0, i));
+					ret.push(arg.substr(i + 1));
+				case _:
+					ret.push(arg);
+			}
+		return ret;
 	}
 }

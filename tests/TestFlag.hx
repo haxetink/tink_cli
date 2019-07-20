@@ -15,6 +15,7 @@ class TestFlag {
 	@:variant('Alias' (['-n', 'myname', 'myarg'], 'myname', 'run myarg'))
 	@:variant('Argument before Flag' (['myarg', '--name', 'myname'], 'myname', 'run myarg'))
 	@:variant('Argument before Alias' (['myarg', '-n', 'myname'], 'myname', 'run myarg'))
+	@:variant('Assignment' (['myarg', '--name=myname'], 'myname', 'run myarg'))
 	public function flags(args:Array<String>, name:String, result:String) {
 		var command = new FlagCommand();
 		return Cli.process(args, command)
