@@ -21,7 +21,7 @@ class Cli {
 	
 	public static macro function getDoc<Target:{}, T>(target:ExprOf<Target>, ?formatter:ExprOf<DocFormatter<T>>):ExprOf<T> {
 		formatter = formatter.ifNull(macro new tink.cli.doc.DefaultFormatter());
-		var doc = tink.cli.Macro.buildDoc(Context.typeof(target));
+		var doc = tink.cli.Macro.buildDoc(Context.typeof(target), target.pos);
 		return macro $formatter.format($doc);
 	}
 	

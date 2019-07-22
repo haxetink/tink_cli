@@ -26,11 +26,11 @@ class Macro {
 		}
 	}
 	
-	public static function buildDoc(type:Type) {
+	public static function buildDoc(type:Type, pos) {
 		
 		if(!docCache.exists(type)) {
 			
-			var info = preprocess(type);
+			var info = preprocess(type, pos);
 			
 			var commands = [];
 			var flags = [];
@@ -86,7 +86,7 @@ class Macro {
 	
 	static function buildClass(type:Type) {
 		
-		var info = preprocess(type);
+		var info = preprocess(type, Context.currentPos());
 		var cls = info.cls;
 		
 		// commands
@@ -226,13 +226,13 @@ class Macro {
 		return TPath('tink.cli.$clsname'.asTypePath());
 	}
 	
-	static function preprocess(type:Type):ClassInfo {
+	static function preprocess(type:Type, pos:Position):ClassInfo {
 		
 		if(!infoCache.exists(type)) {
 			
 			var cls = switch type {
 				case TInst(_.get() => cls, _): cls;
-				default: throw 'assert';
+				default: pos.error('Expected a class instance but got ${type.getName()}');
 			}
 			
 			var info:ClassInfo = {
