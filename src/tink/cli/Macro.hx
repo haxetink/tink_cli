@@ -272,7 +272,7 @@ class Macro {
 					}
 					switch [usedName, usedAlias]  {
 						case [null, null]: info.flags.push({names: names, aliases: aliases, isRequired: isRequired, field: field});
-						case [null, v]: field.pos.makeFailure('Duplicate flag alias: "-' + String.fromCharCode(v) + '"').sure();
+						case [null, v]: field.pos.makeFailure('Duplicate flag alias: "-' + String.fromCharCode(v) + '". By default tink_cli uses the first letter of the flag Rename the alias with @:alias(<single-char>) or disable alias with @:alias(false).').sure();
 						case [v, _]: field.pos.makeFailure('Duplicate flag name: $v').sure();
 					}
 				}
