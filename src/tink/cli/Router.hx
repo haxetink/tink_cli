@@ -71,14 +71,20 @@ class Router<T> {
 	
 	static function expandAssignments(args:Array<String>):Array<String> {
 		var ret = [];
-		for(arg in args)
-			switch [arg.charCodeAt(0), arg.charCodeAt(1), arg.indexOf('=')] {
-				case ['-'.code, '-'.code, i] if(i != -1):
-					ret.push(arg.substr(0, i));
-					ret.push(arg.substr(i + 1));
-				case _:
-					ret.push(arg);
-			}
+		var flags = true;
+		for(arg in args) {
+			if(arg == '--') flags = false;
+			if(!flags)
+				ret.push(arg);
+			else
+				switch [arg.charCodeAt(0), arg.charCodeAt(1), arg.indexOf('=')] {
+					case ['-'.code, '-'.code, i] if(i != -1):
+						ret.push(arg.substr(0, i));
+						ret.push(arg.substr(i + 1));
+					case _:
+						ret.push(arg);
+				}
+		}
 		return ret;
 	}
 }
