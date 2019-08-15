@@ -188,6 +188,9 @@ class FlagCommand extends DebugCommand {
 	public var int:Int = 0;
 	public var float:Float = 0;
 	
+	@:flag(false)
+	public var notFlag:String;
+	
 	@:alias('j')
 	public var ints:Array<Int> = null;
 	@:alias('k')

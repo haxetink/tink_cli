@@ -324,6 +324,8 @@ class Macro {
 						switch field.meta.extract(':flag') {
 							case []:
 								flags.push('--' + field.name);
+							case [{params: [macro false]}]:
+								continue;
 							case [{params: params}]:
 								for(p in params) {
 									var flag = p.getString().sure();
