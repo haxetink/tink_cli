@@ -79,7 +79,7 @@ rest: []
 Check out the examples folder for the complete code.
 
 ### Flags
-Every `public var` in the class will be treated as a cli flag.
+Every `public var` in the class will be treated as a cli flag. (To override this behavior, tag a field with `@:flag(false)`)
 
 For example `public var flag:String` will be set to value `<x>` by the cli swtich `--flag <x>`.
 Also, the framework will also recognize the first letter of the flag name as alias. So in this case
