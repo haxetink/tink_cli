@@ -197,6 +197,8 @@ class FlagCommand extends DebugCommand {
 	public var floats:Array<Float> = null;
 	public var strings:Array<String> = null;
 	
+	// public var rstrings:Array<String>;
+	
 	@:alias('o')
 	public var map:CustomMap = null;
 

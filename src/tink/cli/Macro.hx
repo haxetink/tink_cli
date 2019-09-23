@@ -16,6 +16,8 @@ class Macro {
 	static var infoCache = new TypeMap<ClassInfo>();
 	static var routerCache = new TypeMap<ComplexType>();
 	static var docCache = new TypeMap<Expr>();
+	static var TYPE_STRING = Context.getType('String');
+	static var TYPE_STRINGLY = Context.getType('tink.Stringly');
 	
 	public static function build() {
 		switch Context.getLocalType() {
@@ -369,6 +371,10 @@ class Macro {
 						
 						// flag is marked as "required" (will be prompted when missing) if there is no default expr
 						var isRequired = field.expr() == null && !field.meta.has(':optional');
+						if(isRequired && !TYPE_STRINGLY.unifiesWith(field.type) && !TYPE_STRING.unifiesWith(field.type)) {
+							var type = field.type.toComplex().toString();
+							field.pos.error('$type is not supported. Please use a custom abstract to handle it. See https://github.com/haxetink/tink_cli#data-types');
+						}
 						
 						addFlag(flags, aliases, isRequired);
 					
