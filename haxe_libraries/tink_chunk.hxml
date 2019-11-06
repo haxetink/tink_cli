@@ -1,3 +1,3 @@
--D tink_chunk=0.2.0
-# @install: lix --silent download "gh://github.com/haxetink/tink_chunk#163f5be0a9a7fa964e6cbee0cc051376ced35c99" into tink_chunk/0.2.0/github/163f5be0a9a7fa964e6cbee0cc051376ced35c99
--cp ${HAXE_LIBCACHE}/tink_chunk/0.2.0/github/163f5be0a9a7fa964e6cbee0cc051376ced35c99/src
+-D tink_chunk=0.3.1
+# @install: lix --silent download "haxelib:/tink_chunk#0.3.1" into tink_chunk/0.3.1/haxelib
+-cp ${HAXE_LIBCACHE}/tink_chunk/0.3.1/haxelib/src
