@@ -71,20 +71,27 @@ class DefaultFormatter implements DocFormatter<String> {
 			
 			var maxFlagLength = spec.flags.fold(function(flag, max) {
 				var name = nameOf(flag);
+				if(flag.paramDescription.length > 0) name += ' ${flag.paramDescription}';
 				if(name.length > max) max = name.length;
 				return max;
 			}, 0);
 			
-			function addFlag(name:String, doc:String) {
-				if(doc == null) doc = '';
-				addLine(indent(name.lpad(' ', maxFlagLength) + ' : ' + indent(doc, maxFlagLength + 3).trim(), 6));
+			var ep = ~/^@param.*$/gim;
+			function addFlag(name:String, doc:String, paramDescription:String) {
+				if(doc == null) {
+					doc = '';
+				} else {
+					//Filter out the lines with @param
+					doc = ep.map(doc, function(e : EReg) return "");
+				}
+				addLine(indent(('$name $paramDescription').rpad(' ', maxFlagLength) +  ' : ' + indent(doc, maxFlagLength + 3).trim(), 6));
 			}
 			
 			addLine('');
 			addLine('  Flags:');
 			
 			for(flag in spec.flags) {
-				addFlag(nameOf(flag), formatDoc(flag.doc));
+				addFlag(nameOf(flag), formatDoc(flag.doc), flag.paramDescription);
 			}
 		}
 		

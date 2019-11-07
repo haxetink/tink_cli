@@ -13,6 +13,7 @@ class RunTests {
 			new TestAliasDisabled(),
 			new TestPrompt(),
 			new TestOptional(),
+			new TestDoc(),
 		])).handle(Runner.exit);
 		
 	}
