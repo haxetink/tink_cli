@@ -63,6 +63,20 @@ class DefaultFormatter implements DocFormatter<String> {
 		}
 		
 		if(spec.flags.length > 0) {
+			function getParamDesc(flag:DocFlag) {
+				return if(flag.doc != null) {
+					var ido = flag.doc.indexOf('@param');
+					if(ido > -1) {
+						var iap = ido + 6;
+						StringTools.trim(flag.doc.substr(iap, flag.doc.indexOf('\n', iap) - iap));
+					} else {
+						"";
+					}
+				} else {
+					"";
+				}
+			}
+
 			function nameOf(flag:DocFlag) {
 				var variants = flag.names.join(', ');
 				if(flag.aliases.length > 0) variants += ', ' + flag.aliases.map(function(a) return '-$a').join(', ');
@@ -71,7 +85,7 @@ class DefaultFormatter implements DocFormatter<String> {
 			
 			var maxFlagLength = spec.flags.fold(function(flag, max) {
 				var name = nameOf(flag);
-				if(flag.paramDescription.length > 0) name += ' ${flag.paramDescription}';
+				name += ' ${getParamDesc(flag)}';
 				if(name.length > max) max = name.length;
 				return max;
 			}, 0);
@@ -91,7 +105,7 @@ class DefaultFormatter implements DocFormatter<String> {
 			addLine('  Flags:');
 			
 			for(flag in spec.flags) {
-				addFlag(nameOf(flag), formatDoc(flag.doc), flag.paramDescription);
+				addFlag(nameOf(flag), formatDoc(flag.doc), getParamDesc(flag));
 			}
 		}
 		

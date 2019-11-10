@@ -20,6 +20,5 @@ typedef DocCommand = {
 typedef DocFlag = {
 	aliases:Array<String>,
 	names:Array<String>,
-	doc:String,
-	paramDescription:String
+	doc:String
 }
