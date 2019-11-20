@@ -11,7 +11,9 @@ class Playground {
     }
 
     public function new() {}
-
+	
+	@:command("ss") public var sub:Sub = new Sub();
+	
     @:command
     public function simple(prompt:Prompt) {
         return prompt.prompt(Simple('Input'))
@@ -42,5 +44,15 @@ class Playground {
 	@:defaultCommand
 	public function help() {
 		trace('missing command (simple/multiple/secure)');
+	}
+}
+
+class Sub {
+	public function new() {}
+	
+	@:defaultCommand
+	public function foo() {
+		trace('foo');
+		return Noise;
 	}
 }
