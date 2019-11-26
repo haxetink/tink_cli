@@ -471,10 +471,18 @@ class Macro {
 									
 								} else {
 									
-									for(i in 0...restLocation) cargs.push(macro @:pos(pos) args[$v{i}]);
+									var breakpoint = restLocation;
+									var remaining = args.length - restLocation - 1;
+									if(promptLocation != -1) {
+										if(restLocation > promptLocation)
+											breakpoint -= 1;
+										else 
+											remaining -= 1;
+									}
 									
-									var remaining = cargsNum - restLocation - 1;
-									cargs.push(macro @:pos(pos) args.slice($v{restLocation}, args.length - $v{remaining}));
+									for(i in 0...breakpoint) cargs.push(macro @:pos(pos) args[$v{i}]);
+									
+									cargs.push(macro @:pos(pos) args.slice($v{breakpoint}, args.length - $v{remaining}));
 									
 									for(i in 0...remaining) cargs.push(macro @:pos(pos) args[args.length - $v{remaining - i}]);
 									

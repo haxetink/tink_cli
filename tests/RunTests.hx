@@ -12,6 +12,7 @@ class RunTests {
 			new TestFlag(),
 			new TestAliasDisabled(),
 			new TestPrompt(),
+			new TestPromptAndRest(),
 			new TestOptional(),
 		])).handle(Runner.exit);
 		
