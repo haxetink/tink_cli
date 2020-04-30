@@ -10,8 +10,8 @@
 		"kevinresol",
 		"back2dos"
 	],
-	"releasenote": "[breaking] Vars without expression is treated as required flags",
-	"version": "0.5.0",
+	"releasenote": "Fix rest argument handling when `prompt` argument is present",
+	"version": "0.5.1",
 	"url": "https://github.com/haxetink/tink_cli/",
 	"dependencies": {
 		"tink_io": "",
