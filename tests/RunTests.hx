@@ -14,6 +14,7 @@ class RunTests {
 			new TestPrompt(),
 			new TestPromptAndRest(),
 			new TestOptional(),
+			new TestDoc(),
 		])).handle(Runner.exit);
 		
 	}
