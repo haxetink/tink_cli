@@ -48,6 +48,16 @@ class TestCommand {
 		return Cli.process([cmd], command)
 			.map(function(_) return assert(command.result() == 'multi'));
 	}
+
+	@:describe('Multi with "" taking name from function')
+	@:variant('multi_again1')
+	@:variant('multi_again2')
+	@:variant('multi_again')
+	public function testMultiNameAgain(cmd:String) {
+		var command = new EntryCommand();
+		return Cli.process([cmd], command)
+			.map(function(_) return assert(command.result() == 'multi_again'));
+	}
 	
 	@:describe('Rest Arguments')
 	@:variant(['rest', 'a', 'b'], null)
@@ -123,7 +133,12 @@ class EntryCommand extends DebugCommand {
 	public function multi() {
 		debug = 'multi';
 	}
-	
+
+	@:command('', 'multi_again1', 'multi_again2')
+	public function multi_again() {
+		debug = 'multi_again';
+	}
+
 	@:command
 	public function rest(a:String, b:String, c:Rest<String>, d:String) {
 		debug = 'rest $a $b ${c.join(',')} $d';
