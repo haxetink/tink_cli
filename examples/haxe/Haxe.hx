@@ -15,13 +15,13 @@ class Command {
 	public var js:String;
 	
 	@:flag('-lib')
-	public var lib:Array<String>;
+	public var lib:Array<String> = null;
 	
 	@:flag('-main')
 	public var main:String;
 	
 	@:flag('-D')
-	public var defines:Array<String>;
+	public var defines:Array<String> = null;
 	
 	public var help:Bool;
 	
