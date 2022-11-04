@@ -63,6 +63,20 @@ class DefaultFormatter implements DocFormatter<String> {
 		}
 		
 		if(spec.flags.length > 0) {
+			function getParamDesc(flag:DocFlag) {
+				return if(flag.doc != null) {
+					var ido = flag.doc.indexOf('@param');
+					if(ido > -1) {
+						var iap = ido + 6;
+						StringTools.trim(flag.doc.substr(iap, flag.doc.indexOf('\n', iap) - iap));
+					} else {
+						"";
+					}
+				} else {
+					"";
+				}
+			}
+
 			function nameOf(flag:DocFlag) {
 				var variants = flag.names.join(', ');
 				if(flag.aliases.length > 0) variants += ', ' + flag.aliases.map(function(a) return '-$a').join(', ');
@@ -71,20 +85,27 @@ class DefaultFormatter implements DocFormatter<String> {
 			
 			var maxFlagLength = spec.flags.fold(function(flag, max) {
 				var name = nameOf(flag);
+				name += ' ${getParamDesc(flag)}';
 				if(name.length > max) max = name.length;
 				return max;
 			}, 0);
 			
-			function addFlag(name:String, doc:String) {
-				if(doc == null) doc = '';
-				addLine(indent(name.lpad(' ', maxFlagLength) + ' : ' + indent(doc, maxFlagLength + 3).trim(), 6));
+			var ep = ~/^@param.*$/gim;
+			function addFlag(name:String, doc:String, paramDescription:String) {
+				if(doc == null) {
+					doc = '';
+				} else {
+					//Filter out the lines with @param
+					doc = ep.map(doc, function(e : EReg) return "");
+				}
+				addLine(indent(('$name $paramDescription').rpad(' ', maxFlagLength) +  ' : ' + indent(doc, maxFlagLength + 3).trim(), 6));
 			}
 			
 			addLine('');
 			addLine('  Flags:');
 			
 			for(flag in spec.flags) {
-				addFlag(nameOf(flag), formatDoc(flag.doc));
+				addFlag(nameOf(flag), formatDoc(flag.doc), getParamDesc(flag));
 			}
 		}
 		
