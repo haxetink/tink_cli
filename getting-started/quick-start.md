@@ -22,7 +22,7 @@ class Tool {
 	
 	public var verbose:Bool;
 	
-	public function new() {}
+	public function new() {verbose = false;}
 	
 	@:defaultCommand
 	public function hello(name:String) {
