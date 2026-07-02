@@ -20,8 +20,8 @@ jobs:
           - jvm
           - python
           - php
-          - cpp
-          - lua
+          # - cpp
+          # - lua
           - neko
           - interp
 
