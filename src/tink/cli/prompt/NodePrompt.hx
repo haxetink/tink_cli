@@ -18,7 +18,7 @@ class NodePrompt extends IoPrompt {
 	}
 	
 	override function secureInput(prompt:String):Promise<Stringly> {
-		return Future.async(function(cb) {
+		return Future.irreversible(function(cb) {
 			
 			var rl:Dynamic = js.node.Readline.createInterface({
 				input: process.stdin,

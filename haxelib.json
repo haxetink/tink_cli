@@ -1,17 +1,11 @@
 {
 	"name": "tink_cli",
 	"license": "MIT",
-	"tags": [
-		"cross",
-		"cli"
-	],
+	"tags": ["cross", "cli"],
 	"classPath": "src",
-	"contributors": [
-		"kevinresol",
-		"back2dos"
-	],
+	"contributors": ["kevinresol", "back2dos"],
 	"releasenote": "Fix rest argument handling when `prompt` argument is present",
-	"version": "0.5.1",
+	"version": "0.6.0",
 	"url": "https://github.com/haxetink/tink_cli/",
 	"dependencies": {
 		"tink_io": "",

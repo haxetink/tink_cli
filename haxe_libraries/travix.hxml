@@ -1,6 +1,6 @@
--D travix=0.12.2
-# @install: lix --silent download "gh://github.com/back2dos/travix#d9f15d14098deea42a89334b0473f088e670e7de" into travix/0.12.2/github/d9f15d14098deea42a89334b0473f088e670e7de
-# @post-install: cd ${HAXE_LIBCACHE}/travix/0.12.2/github/d9f15d14098deea42a89334b0473f088e670e7de && haxe -cp src --run travix.PostDownload
-# @run: haxelib run-dir travix ${HAXE_LIBCACHE}/travix/0.12.2/github/d9f15d14098deea42a89334b0473f088e670e7de
+# @install: lix --silent download "gh://github.com/back2dos/travix#afd2cb28d4a24127367e0a79aaa8319f3740ab2e" into travix/0.15.3/github/afd2cb28d4a24127367e0a79aaa8319f3740ab2e
+# @run: haxelib run-dir travix "${HAXE_LIBCACHE}/travix/0.15.3/github/afd2cb28d4a24127367e0a79aaa8319f3740ab2e"
 -lib tink_cli
--cp ${HAXE_LIBCACHE}/travix/0.12.2/github/d9f15d14098deea42a89334b0473f088e670e7de/src
+-cp ${HAXE_LIBCACHE}/travix/0.15.3/github/afd2cb28d4a24127367e0a79aaa8319f3740ab2e/src
+-D travix=0.15.3
+--macro travix.Macro.setup()

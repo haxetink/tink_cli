@@ -27,7 +27,7 @@ class RetryPrompt implements Prompt {
 			case Simple(_) | Secure(_):
 				proxy.prompt(type);
 			case MultipleChoices(v, c):
-				Future.async(function(cb) {
+				Future.irreversible(function(cb) {
 					var remaining = trials;
 					function next() {
 						remaining--;

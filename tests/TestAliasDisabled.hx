@@ -27,8 +27,7 @@ class TestAliasDisabled {
 		return Cli.process(['-p', 'mypath', 'myarg'], new AliasCommand())
 			.and(Cli.process(['-n', 'myname', 'myarg'], new AliasCommand()))
 			.map(function(result) {
-				asserts.assert(!result.a.isSuccess());
-				asserts.assert(!result.b.isSuccess());
+				asserts.assert(!result.isSuccess());
 				return asserts.done();
 			});
 	}

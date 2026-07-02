@@ -1,8 +1,7 @@
-# @install: lix --silent download https://github.com/haxetink/tink_cli/archive/5207b1c4c5126ea866ee5b1e8714f6ee658d2888.tar.gz into tink_cli/0.2.1/github/5207b1c4c5126ea866ee5b1e8714f6ee658d2888
--D tink_cli=0.2.1
--cp src
-# Make sure docs are generated
--D use-rtti-doc
 -lib tink_io
 -lib tink_stringly
 -lib tink_macro
+-cp ${SCOPE_DIR}/./src
+-D tink_cli=0.6.0
+${SCOPE_DIR}/./extraParams.hxml
+--macro Sys.println("haxe_libraries/tink_cli.hxml:5: [Warning] Using dev version of library tink_cli")

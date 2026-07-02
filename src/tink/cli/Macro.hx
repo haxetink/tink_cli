@@ -213,7 +213,7 @@ class Macro {
 			}
 			
 			override function promptRequired():tink.core.Promise<tink.core.Noise> {
-				return tink.core.Future.async(function(cb) $promptRequired);
+				return tink.core.Future.irreversible(function(cb) $promptRequired);
 			}
 			
 		}
