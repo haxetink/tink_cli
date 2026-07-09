@@ -294,7 +294,11 @@ class Macro {
 					case [{params: []}]:
 						commands.push(field.name);
 					case [{params: params}]:
-						for(p in params) commands.push(p.getString().sure());
+						for(p in params) 
+                            if (p.getString().sure() == "")
+                                commands.push(field.name);
+                            else 
+                                commands.push(p.getString().sure());
 					case v:
 						v[1].pos.makeFailure('Multiple @:command meta is not allowed').sure();
 				}
